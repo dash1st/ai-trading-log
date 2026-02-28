@@ -112,17 +112,18 @@ class TelegramAgent:
         await update.message.reply_text(res_msg)
 
     async def scheduled_report(self, context: ContextTypes.DEFAULT_TYPE):
-        """스케줄러에 의해 5분마다 주기로 실행될 관심 종목 타점 스캔 및 스크리닝 발송"""
+        """스케줄러에 의해 5분마다 주기로 실행될 관심 종목 타점 스캔 및 자동 매매 대기"""
+        from auto_trader import AutoTrader
+        if not AutoTrader.is_market_open():
+            return  # 장외 시간에는 동작하지 않음
+            
         from datetime import datetime
         now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        print(f"[{now}] [Telegram] ⏰ 5분 주기 스케줄러 작동: 추천 종목 스캔 중...")
+        print(f"[{now}] [Telegram] ⏰ 5분 주기 스케줄러: 백그라운드 타점 스캔 및 포트폴리오 현황 보고 중...")
         
         # quant_analyzer.py 에 정의된 대표 종목 사전(STOCK_NAMES)을 참조하여 관심 종목 풀 설정
         from quant_analyzer import STOCK_NAMES
         watch_list = list(STOCK_NAMES.keys())
-        
-        has_signal = False
-        report_chunks = ["🚨 **[5분 주기 자동 스캔: 추천 종목 브리핑]** 🚨\n"]
         
         for ticker in watch_list:
             df = self.client.fetch_ohlcv(ticker, period_type="D")
@@ -130,34 +131,52 @@ class TelegramAgent:
                 analyzed_df = self.analyzer.calculate_indicators(df)
                 latest = analyzed_df.iloc[-1]
                 
-                # 타점 발생 여부 판별 (로스카메론 과매도/과매수 또는 BB 터치 / 캐스퍼 FVG 발생)
-                is_ross = latest.get('Ross_Oversold', False) or latest.get('Ross_Overbought', False)
-                is_fvg = latest.get('FVG_Bull', False) or latest.get('FVG_Bear', False)
-                
-                # 시그널이 감지된 종목 처리 로직
-                if is_ross or is_fvg:
-                    has_signal = True
-                    report = self.analyzer.generate_report(ticker, analyzed_df)
-                    report_chunks.append(report)
-                    
-                    # 🔥 [자동 매매 연동 - 옵션 A 지능형 가중치 매매]
-                    if self.auto_trader is not None:
-                        # 텍스트 의존성 제거: 순도 높은 데이터 분석 모듈 호출
-                        signal = self.analyzer.get_trading_signal(ticker, analyzed_df)
-                        if signal.get("should_buy"):
-                            current_price = latest['Close']
-                            bot_reason = signal["reason"]
-                            weight = signal["weight"]
-                            context.application.create_task(
-                                self.auto_trader.execute_auto_buy(ticker, current_price, bot_reason, weight)
-                            )
+                # 🔥 [자동 매매 연동 - 옵션 A 지능형 가중치 매매]
+                if self.auto_trader is not None:
+                    # 순도 높은 데이터 분석 모듈 호출
+                    signal = self.analyzer.get_trading_signal(ticker, analyzed_df)
+                    if signal.get("should_buy"):
+                        current_price = latest['Close']
+                        bot_reason = signal["reason"]
+                        weight = signal["weight"]
+                        context.application.create_task(
+                            self.auto_trader.execute_auto_buy(ticker, current_price, bot_reason, weight)
+                        )
         
-        # 타점이 발견된 경우에만 텔레그램으로 브리핑 전송
-        if has_signal:
-            final_msg = "\n=======================\n".join(report_chunks)
-            await context.bot.send_message(chat_id=self.chat_id, text=final_msg[:4000], parse_mode='Markdown')
+        # 기존 관심종목 브리핑 발송은 삭제하고, 현재 보유 중인 알짜 포지션 수익 현황만 보고
+        if self.auto_trader is not None:
+            await self.auto_trader.send_portfolio_status()
+
+    async def scheduled_opening_bell(self, context: ContextTypes.DEFAULT_TYPE):
+        """매일 아침 08:58 에 실행되는 장 시작 알림"""
+        from datetime import datetime
+        now = datetime.now()
+        if now.weekday() >= 5:
+            await context.bot.send_message(chat_id=self.chat_id, text="☕️ **[휴장일 안내]**\n오늘은 주말/휴장일입니다. 봇은 오늘 하루 매매를 쉬고 대기합니다. 편안한 주말 보내세요!")
         else:
-            print("[Telegram] ⏰ 이번 스캔에서는 명확한 퀀트 타점이 발생한 종목이 없습니다.")
+            await context.bot.send_message(chat_id=self.chat_id, text="🌅 **[장 개장 준비 완료]**\n곧 정규장이 시작됩니다! 지능형 스캐너와 자동 매매 트레일러 엔진이 감시 루프를 가동합니다. 오늘도 성투하세요! 💪")
+            
+        # 하루 시작 시 당일 누적 수익 초기화
+        if self.auto_trader:
+            self.auto_trader.today_realized_pnl = 0.0
+
+    async def scheduled_closing_bell(self, context: ContextTypes.DEFAULT_TYPE):
+        """매일 오후 15:35 에 실행되는 장 마감 일간 리포트"""
+        from datetime import datetime
+        now = datetime.now()
+        if now.weekday() >= 5:
+            return # 주말은 마감 보고 생략
+            
+        pnl = self.auto_trader.today_realized_pnl if self.auto_trader else 0.0
+        icon = "📈" if pnl >= 0 else "📉"
+        
+        msg = f"🌙 **[정규장 마감 보고]**\n오늘 한국 주식시장 정규 거래 시간이 종료되었습니다.\n\n{icon} **오늘의 실현 손익**: {pnl:,.0f} 원\n\n수고하셨습니다. 봇은 내일 아침 다시 깨어납니다."
+        await context.bot.send_message(chat_id=self.chat_id, text=msg)
+
+    async def scheduled_weekly_report(self, context: ContextTypes.DEFAULT_TYPE):
+        """매주 금요일 오후 15:40 에 실행되는 주간 결산 (목업)"""
+        msg = "📆 **[주간 결산 보고]**\n한 주간의 장이 모두 마감되었습니다. 봇이 수집한 이번 주 전체 누적 수익 및 승률 리포트입니다. (상세 내용은 곧 정식 구현됩니다.)\n\n즐거운 주말 보내세요!"
+        await context.bot.send_message(chat_id=self.chat_id, text=msg)
 
     def run(self):
         """텔레그램 봇 메인 루프 (Polling) 실행"""
@@ -175,8 +194,25 @@ class TelegramAgent:
         app.add_handler(CommandHandler("buy", self.buy_cmd))
         app.add_handler(CommandHandler("sell", self.sell_cmd))
         
-        # 스케줄러: 봇 구동 10초 뒤 최초 실행, 이후 매 300초(5분)마다 반복 실행
+        # 스케줄러 1: 5분(300초) 주기 백그라운드 스캔 (장중에만 내부적으로 동작)
         app.job_queue.run_repeating(self.scheduled_report, interval=300, first=10) 
+        
+        # 스케줄러 2: ⏰ 정규장 운영 알림 (한국시간 기준 UTC+9 처리 필요)
+        import datetime
+        import pytz
+        kr_tz = pytz.timezone('Asia/Seoul')
+        
+        # 아침 08:58 장 시작 알림
+        t_open = datetime.time(hour=8, minute=58, tzinfo=kr_tz)
+        app.job_queue.run_daily(self.scheduled_opening_bell, time=t_open)
+        
+        # 오후 15:35 장 마감 알림
+        t_close = datetime.time(hour=15, minute=35, tzinfo=kr_tz)
+        app.job_queue.run_daily(self.scheduled_closing_bell, time=t_close)
+        
+        # 금요일 오후 15:40 주간 결산 (days=(4,) 가 금요일)
+        t_weekly = datetime.time(hour=15, minute=40, tzinfo=kr_tz)
+        app.job_queue.run_daily(self.scheduled_weekly_report, time=t_weekly, days=(4,))
         
         # 폴링 시작 (여기서 스레드 블락킹)
         app.run_polling()

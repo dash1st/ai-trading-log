@@ -19,8 +19,14 @@ class TelegramAgent:
 
     async def start_cmd(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """봇 시작 메시지"""
-        msg = "🤖 AI 트레이딩 봇 연결 성공!\n명령어:\n/status [종목코드]: 상태 요약\n/buy [종목코드] [수량] [단가]: 매수\n/sell [종목코드] [수량] [단가]: 매도"
+        msg = "🤖 AI 트레이딩 봇 연결 성공!\n명령어:\n/status [종목코드]: 추세 분석\n/balance: 현재 잔고 조회\n/buy [종목]: 매수\n/sell [종목]: 매도"
         await update.message.reply_text(msg)
+
+    async def balance_cmd(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        """잔고 조회 프로세스"""
+        await update.message.reply_text("🔍 계좌 잔고를 조회 중입니다...")
+        res_msg = self.client.fetch_balance()
+        await update.message.reply_text(res_msg, parse_mode='Markdown')
 
     async def status_cmd(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """상태 조회 프로세스"""
@@ -87,6 +93,7 @@ class TelegramAgent:
         # 명령어 핸들러 등록
         app.add_handler(CommandHandler("start", self.start_cmd))
         app.add_handler(CommandHandler("status", self.status_cmd))
+        app.add_handler(CommandHandler("balance", self.balance_cmd))
         app.add_handler(CommandHandler("buy", self.buy_cmd))
         app.add_handler(CommandHandler("sell", self.sell_cmd))
         

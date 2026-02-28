@@ -115,6 +115,21 @@ class QuantAnalyzer:
         elif latest['FVG_Bear']:
             gap = latest['FVG_Bear_Top'] - latest['FVG_Bear_Btm']
             casper_fvg = f"🔴 하락 FVG 생성 (갭 깊이: {gap:,.0f}원) | 🚫 강한 하방 모멘텀 관망 존: {latest['FVG_Bear_Btm']:,.0f} ~ {latest['FVG_Bear_Top']:,.0f}"
+            
+        # 💡 종합 결론 (최종 액션 플랜 판별)
+        final_action = "⚖️ **중립/관망 (Hold)** : 뚜렷한 매수/매도 시그널이 없습니다. 현금 보존을 권장합니다."
+        
+        # 1. 강력 매수 (롱 진입 타점 + BB 하단/상승 FVG 등 중첩)
+        if "🟢 롱 진입 타점" in ross_status or ("🟡 롱 예비" in ross_status and latest['FVG_Bull']):
+            final_action = "🔥 **적극 매수 (Strong Buy)** : 폭발적인 반등 시그널이 겹쳤습니다. 분할 매수를 고려할 만한 황금 타점입니다!"
+        elif "🟡 롱 예비" in ross_status or latest['FVG_Bull']:
+            final_action = "👀 **매수 관망 (Wait for Buy)** : 하락이 멈추고 반등 기미가 보입니다. 아직 추세 전환 확정은 아니므로 타점을 째려보세요."
+            
+        # 2. 강력 매도 (숏 진입 타점 + 과매수 중첩)
+        elif "🔴 숏 진입 타점" in ross_status or ("🟡 숏 예비" in ross_status and latest['FVG_Bear']):
+            final_action = "⚠️ **전량 매도 / 숏 진입 (Strong Sell)** : 과열의 끝자락에서 데드크로스가 떴습니다. 당장 도망치거나 공매도를 준비하세요!"
+        elif "🟡 숏 예비" in ross_status or latest['FVG_Bear']:
+            final_action = "❄️ **분할 매도 (Take Profit)** : 단기 고점에 다다를 징후가 보입니다. 슬슬 수익을 실현(익절)하는 것이 좋습니다."
         
         report = f"""
 ## 📊 **[{stock_name}]** ({ticker}) 전략 분석 리포트
@@ -133,8 +148,12 @@ class QuantAnalyzer:
 *   상태: {casper_fvg}
 *   설명: 갭이 발생했다면 가격이 해당 범위 안으로 돌아올 때 강한 반등(되돌림)이 나올 확률이 높습니다.
 
+=======================================
+🚀 **[AI 트레이딩 봇의 최종 결론]** 🚀
+{final_action}
+
 ---------------------------------------
-**💡 AI 어시스턴트에게 복붙해서 질문해 보세요:**
-"위 지표를 바탕으로 현재 시점에서 어떤 타점을 잡는 것이 좋을지 수학적/심리적으로 분석해 줘."
+**💡 AI 어시스턴트에게 복붙해서 추가 질문을 던져보세요:**
+"위 지표를 바탕으로 현재 시점에서 어떤 타점을 잡는 것이 좋을지 수학적/심리적으로 더 깊게 분석해 줘."
 """
         return report

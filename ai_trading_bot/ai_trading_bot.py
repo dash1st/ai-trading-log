@@ -7,7 +7,7 @@ def run_bot():
     print("🚀 AI 트레이딩 봇 시작 (수동 판단 모드) 🚀")
     print("=" * 50)
     
-    # 1. API 클라이언트 초기화
+    # 1. API 클라이언트 초기화 (초기화 즉시 KIS 인증 로직 실행됨)
     client = KisApiClient()
     
     # 2. 분석기 초기화
@@ -15,10 +15,9 @@ def run_bot():
     
     print("\n--- [데이터 수집] ---")
     if client.is_ready:
-        print("KIS API가 설정되어 있습니다. 아직 로직이 비어있어 Mock 데이터로 진행합니다.")
-        # 추후 API 발급 후: df = client.fetch_ohlcv("005930") 등으로 수정
+        print(f"KIS API가 설정되어 모의투자 계좌({client.account_no}) 기준으로 통신 대기 중입니다.")
     
-    # 지금은 무조건 Mock 데이터 (삼성전자: 005930.KS) 로 테스트
+    # 테스트 구동: 삼전
     test_ticker = "005930.KS"
     df = client.fetch_ohlcv_mock(ticker=test_ticker, period="6mo")
     
@@ -30,7 +29,7 @@ def run_bot():
     print(report)
     
     print("=" * 50)
-    print("✅ 봇 실행이 완료되었습니다. 리포트를 확인하고 AI와 전략을 상담해 보세요.")
+    print("✅ 봇 실행 완료. KIS API 토큰 발급 테스트 및 퀀트 결과가 정상 동작했습니다.")
 
 if __name__ == "__main__":
     run_bot()

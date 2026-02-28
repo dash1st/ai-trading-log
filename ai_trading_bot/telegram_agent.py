@@ -4,12 +4,13 @@ from telegram import Update
 from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
 
 class TelegramAgent:
-    def __init__(self, client, analyzer):
+    def __init__(self, client, analyzer, auto_trader=None):
         load_dotenv()
         self.token = os.environ.get("TELEGRAM_BOT_TOKEN")
         self.chat_id = os.environ.get("TELEGRAM_CHAT_ID")
         self.client = client
         self.analyzer = analyzer
+        self.auto_trader = auto_trader
         
         if not self.token or not self.chat_id:
             print("[Telegram] ⚠️ 텔레그램 토큰이 없어 봇을 시작할 수 없습니다.")
@@ -133,11 +134,21 @@ class TelegramAgent:
                 is_ross = latest.get('Ross_Oversold', False) or latest.get('Ross_Overbought', False)
                 is_fvg = latest.get('FVG_Bull', False) or latest.get('FVG_Bear', False)
                 
-                # 시그널이 감지된 종목만 리포트에 추가
+                # 시그널이 감지된 종목 처리 로직
                 if is_ross or is_fvg:
                     has_signal = True
                     report = self.analyzer.generate_report(ticker, analyzed_df)
                     report_chunks.append(report)
+                    
+                    # 🔥 [자동 매매 로직 연동] '적극 매수' 또는 '롱 진입' 키워드가 리포트 결론에 포함되었다면 즉시 자동 매수 호출
+                    if self.auto_trader is not None:
+                        if "적극 매수" in report or "롱 진입 타점" in report:
+                            # 비동기 스케줄러 안이므로 background task로 매수 명령 실행
+                            current_price = latest['Close']
+                            bot_reason = "5분 스캐너 강력 매수 시그널 포착 (RSI/FVG 중첩)"
+                            context.application.create_task(
+                                self.auto_trader.execute_auto_buy(ticker, current_price, bot_reason)
+                            )
         
         # 타점이 발견된 경우에만 텔레그램으로 브리핑 전송
         if has_signal:

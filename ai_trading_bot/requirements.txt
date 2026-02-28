@@ -7,7 +7,7 @@ requests==2.31.0
 python-dotenv==1.0.1
 
 # 데이터 분석 및 조작용
-pandas==2.2.0
+pandas>=2.2.3
 
 # 퀀트(기술적 분석) 보조지표 계산 라이브러리 (RSI, MACD 등)
 ta==0.11.0

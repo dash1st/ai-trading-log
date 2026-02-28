@@ -57,12 +57,65 @@ class KisApiClient:
         df = df[['Open', 'High', 'Low', 'Close', 'Volume']].dropna()
         return df
 
-    # 추후 API 통신 함수 작성 공간
-    def fetch_current_price(self, stock_code):
-        pass
+    def fetch_ohlcv(self, stock_code, period_type="D"):
+        """
+        KIS API: 국내주식 기간별시세(일/주/월/년) 조회
+        period_type: "D"(일봉), "W"(주봉), "M"(월봉)
+        """
+        if not self.is_ready or not self.access_token:
+            print("[KIS_API] ❌ 인증 토큰이 없어 데이터를 조회할 수 없습니다.")
+            return None
 
-    def fetch_ohlcv(self, stock_code):
-        pass
+        url = f"{self.domain}/uapi/domestic-stock/v1/quotations/inquire-daily-price"
+        headers = {
+            "content-type": "application/json; charset=utf-8",
+            "authorization": f"Bearer {self.access_token}",
+            "appkey": self.app_key,
+            "appsecret": self.app_secret,
+            "tr_id": "FHKST01010400" # 기간별 시세 조회 tr_id (모의/실전 동일)
+        }
+        params = {
+            "FID_COND_MRKT_DIV_CODE": "J", # J: 주식
+            "FID_INPUT_ISCD": stock_code,
+            "FID_PERIOD_DIV_CODE": period_type,
+            "FID_ORG_ADJ_PRC": "1" # 1: 수정주가
+        }
+
+        try:
+            res = requests.get(url, headers=headers, params=params)
+            
+            if res.status_code == 200:
+                data = res.json()
+                if data["rt_cd"] == "0":
+                    df = pd.DataFrame(data["output"])
+                    
+                    # 퀀트 계산을 위해 숫자형으로 변환 및 이름 매핑
+                    df = df.rename(columns={
+                        "stck_bsop_date": "Date",
+                        "stck_oprc": "Open",
+                        "stck_hgpr": "High",
+                        "stck_lwpr": "Low",
+                        "stck_clpr": "Close",
+                        "acml_vol": "Volume"
+                    })
+                    
+                    # 날짜순으로 정렬 (과거 -> 현재)
+                    df = df.iloc[::-1].reset_index(drop=True)
+                    
+                    for col in ["Open", "High", "Low", "Close", "Volume"]:
+                        df[col] = pd.to_numeric(df[col])
+                        
+                    print(f"[KIS_API] 📊 '{stock_code}'의 과거 가격 데이터를 KIS로부터 성공적으로 불러왔습니다.")
+                    return df
+                else:
+                    print(f"[KIS_API] ❌ 조회 실패: {data['msg1']}")
+                    return None
+            else:
+                print(f"[KIS_API] ❌ HTTP 통신 오류: {res.status_code}")
+                return None
+        except Exception as e:
+            print(f"[KIS_API] ❌ 데이터 조회 중 에러 발생: {e}")
+            return None
     
     def execute_buy(self, stock_code, qty, price):
         pass

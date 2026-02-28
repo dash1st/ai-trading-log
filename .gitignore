@@ -1,6 +1,0 @@
-.env
-__pycache__/
-*.pyc
-venv/
-*.log
-trading_log/site/

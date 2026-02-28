@@ -140,14 +140,16 @@ class TelegramAgent:
                     report = self.analyzer.generate_report(ticker, analyzed_df)
                     report_chunks.append(report)
                     
-                    # 🔥 [자동 매매 로직 연동] '적극 매수' 또는 '롱 진입' 키워드가 리포트 결론에 포함되었다면 즉시 자동 매수 호출
+                    # 🔥 [자동 매매 연동 - 옵션 A 지능형 가중치 매매]
                     if self.auto_trader is not None:
-                        if "적극 매수" in report or "롱 진입 타점" in report:
-                            # 비동기 스케줄러 안이므로 background task로 매수 명령 실행
+                        # 텍스트 의존성 제거: 순도 높은 데이터 분석 모듈 호출
+                        signal = self.analyzer.get_trading_signal(ticker, analyzed_df)
+                        if signal.get("should_buy"):
                             current_price = latest['Close']
-                            bot_reason = "5분 스캐너 강력 매수 시그널 포착 (RSI/FVG 중첩)"
+                            bot_reason = signal["reason"]
+                            weight = signal["weight"]
                             context.application.create_task(
-                                self.auto_trader.execute_auto_buy(ticker, current_price, bot_reason)
+                                self.auto_trader.execute_auto_buy(ticker, current_price, bot_reason, weight)
                             )
         
         # 타점이 발견된 경우에만 텔레그램으로 브리핑 전송

@@ -1,0 +1,832 @@
+
+<!doctype html>
+<html lang="ko" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="트레이딩 봇의 모의투자 결과, 백테스트, 전략 분석 리포트 보관소">
+      
+      
+      
+        <link rel="canonical" href="http://localhost:8000/strategy/casper_fvg/">
+      
+      
+        <link rel="prev" href="../../logs/2026-02/">
+      
+      
+        <link rel="next" href="../ross_cameron/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.3">
+    
+    
+      
+        <title>Casper FVG 전략 - AI 트레이딩 봇 모의투자 일지</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="deep-purple">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#casper-smc-fvg-fair-value-gap" class="md-skip">
+          콘텐츠로 이동
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="상단/헤더">
+    <a href="../.." title="AI 트레이딩 봇 모의투자 일지" class="md-header__button md-logo" aria-label="AI 트레이딩 봇 모의투자 일지" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            AI 트레이딩 봇 모의투자 일지
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Casper FVG 전략
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="deep-purple"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m17.75 4.09-2.53 1.94.91 3.06-2.63-1.81-2.63 1.81.91-3.06-2.53-1.94L12.44 4l1.06-3 1.06 3zm3.5 6.91-1.64 1.25.59 1.98-1.7-1.17-1.7 1.17.59-1.98L15.75 11l2.06-.05L18.5 9l.69 1.95zm-2.28 4.95c.83-.08 1.72 1.1 1.19 1.85-.32.45-.66.87-1.08 1.27C15.17 23 8.84 23 4.94 19.07c-3.91-3.9-3.91-10.24 0-14.14.4-.4.82-.76 1.27-1.08.75-.53 1.93.36 1.85 1.19-.27 2.86.69 5.83 2.89 8.02a9.96 9.96 0 0 0 8.02 2.89m-1.64 2.02a12.08 12.08 0 0 1-7.8-3.47c-2.17-2.19-3.33-5-3.49-7.82-2.81 3.14-2.7 7.96.31 10.98 3.02 3.01 7.84 3.12 10.98.31"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="deep-purple"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 7a5 5 0 0 1 5 5 5 5 0 0 1-5 5 5 5 0 0 1-5-5 5 5 0 0 1 5-5m0 2a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3m0-7 2.39 3.42C13.65 5.15 12.84 5 12 5s-1.65.15-2.39.42zM3.34 7l4.16-.35A7.2 7.2 0 0 0 5.94 8.5c-.44.74-.69 1.5-.83 2.29zm.02 10 1.76-3.77a7.131 7.131 0 0 0 2.38 4.14zM20.65 7l-1.77 3.79a7.02 7.02 0 0 0-2.38-4.15zm-.01 10-4.14.36c.59-.51 1.12-1.14 1.54-1.86.42-.73.69-1.5.83-2.29zM12 22l-2.41-3.44c.74.27 1.55.44 2.41.44.82 0 1.63-.17 2.37-.44z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="검색" placeholder="검색" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="검색">
+        
+        <button type="reset" class="md-search__icon md-icon" title="지우기" aria-label="지우기" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            검색 초기화
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="탭" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  🏠 홈
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../logs/2026-02/" class="md-tabs__link">
+          
+  
+  
+  📈 매매 일지
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="./" class="md-tabs__link">
+          
+  
+  
+  🧠 트레이딩 전략
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+  
+
+<nav class="md-nav md-nav--primary md-nav--lifted md-nav--integrated" aria-label="네비게이션" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="AI 트레이딩 봇 모의투자 일지" class="md-nav__button md-logo" aria-label="AI 트레이딩 봇 모의투자 일지" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    AI 트레이딩 봇 모의투자 일지
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    🏠 홈
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    📈 매매 일지
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    📈 매매 일지
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../logs/2026-02/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    2026년 2월
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    🧠 트레이딩 전략
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    🧠 트레이딩 전략
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Casper FVG 전략
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Casper FVG 전략
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="목차">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      목차
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        📌 핵심 철학
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#fvg-fair-value-gap" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        🔍 FVG (Fair Value Gap) 식별 방법
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        🟢 롱(매수) 포지션 진입 전략 (3가지 필수 조건)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="🟢 롱(매수) 포지션 진입 전략 (3가지 필수 조건)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1단계: 유동성이 몰리는 '특정 시간' 지정
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-155" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2단계: 상위 타임프레임(15분/5분봉) '기준선' 드로잉
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-fvg" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3단계: 기준선 돌파 및 FVG 생성 확인 (타점)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        💸 매매 실행 (진입/손절/익절)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        🔴 숏(매도) 포지션 진입 전략
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#ai-next-step" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        🤖 AI 봇 적용 방안 (Next Step &amp; 한계점)
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ross_cameron/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Ross Cameron 돌파 전략
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="casper-smc-fvg-fair-value-gap">캐스퍼 (Casper) SMC FVG (Fair Value Gap) 매매 전략</h1>
+<p>이 문서는 AI 트레이딩 봇이 특정 시간대(단기 모멘텀)에 유동성 갭(FVG)을 활용해 매매 타점을 잡는 <strong>"캐스퍼의 90분 FVG 단타 전략"</strong>을 분석기에 적용하기 위해 정리한 기준 문서입니다.</p>
+<h2 id="_1">📌 핵심 철학</h2>
+<ul>
+<li><strong>짧은 시간, 높은 효율</strong>: 하루 종일 차트를 보며 뇌동매매를 하는 대신, 유동성이 가장 풍부한 <strong>특정 90분(예: 뉴욕장 오픈 직후)</strong>에만 매매하여 승률을 극대화합니다.</li>
+<li><strong>FVG (Fair Value Gap, 공정 가치 갭)</strong>: 가격이 급등/급락하며 매수·매도 거래가 치열하게 이뤄지지 못하고 '비어버린' 캔들 사이의 공간. 시장은 이 불균형을 채우기 위해 십중팔구 해당 가격대로 <strong>'되돌림(회귀)'</strong> 현상을 보입니다.</li>
+<li><strong>아무 FVG나 들어가지 않는다</strong>: 시간, 기준선 돌파, FVG 형성이라는 <strong>3가지 필수 조건</strong>이 모두 충족된 곳에서만 진입합니다.</li>
+</ul>
+<hr />
+<h2 id="fvg-fair-value-gap">🔍 FVG (Fair Value Gap) 식별 방법</h2>
+<p>차트상 연속된 3개의 캔들을 봅니다.
+1. <strong>상승 FVG (롱 타점)</strong>: 1번 캔들의 고가와 3번 캔들의 저가 사이에 겹치는 꼬리가 없이 뻥 뚫린 빈 공간 (2번 캔들의 거대한 양봉 몸통 구간).
+2. <strong>하락 FVG (숏 타점)</strong>: 1번 캔들의 저가와 3번 캔들의 고가 사이에 겹치는 꼬리가 없는 빈 공간 (2번 캔들의 거대한 음봉 몸통 구간).</p>
+<hr />
+<h2 id="3">🟢 롱(매수) 포지션 진입 전략 (3가지 필수 조건)</h2>
+<h3 id="1">1단계: 유동성이 몰리는 '특정 시간' 지정</h3>
+<ul>
+<li>24시간 매매를 금지합니다.</li>
+<li>KIS API(한국 주식) 적용 시 <strong>오전 9시 00분 ~ 10시 30분 (장 초반 90분)</strong> 같이 매수세가 폭발하는 시간대로 한정합니다. (미장 기준은 뉴욕장 오픈인 밤 10시 30분 또는 11시 30분)</li>
+</ul>
+<h3 id="2-155">2단계: 상위 타임프레임(15분/5분봉) '기준선' 드로잉</h3>
+<ul>
+<li>매매할 타임프레임보다 한 단계 높은 캔들을 봅니다. (예: 5분봉 단타 시 15분봉 확인 / 1분봉 단타 시 5분봉 확인)</li>
+<li>시작 시간의 첫 번째 상위 캔들(예: 9시 정각의 15분봉 캔들)의 <strong>고가(High)와 저가(Low)</strong>에 각각 가로 기준선을 긋습니다.</li>
+</ul>
+<h3 id="3-fvg">3단계: 기준선 돌파 및 FVG 생성 확인 (타점)</h3>
+<ul>
+<li>이제 하위 타임프레임(예: 5분봉 또는 1분봉) 차트로 내려옵니다.</li>
+<li><strong>조건</strong>: 캔들이 2단계에서 그어둔 <strong>'고가 기준선'을 몸통으로 강력하게 상향 돌파</strong>하면서, 그 자리에 <strong>상승 FVG</strong>가 만들어지는지 관찰합니다.</li>
+</ul>
+<h3 id="_2">💸 매매 실행 (진입/손절/익절)</h3>
+<ul>
+<li><strong>진입 타점 (되돌림 매수)</strong>: 주가가 급등 후 잠시 빠지면서, 앞서 만들어진 <strong>'FVG 빈 공간' 안으로 가격이 다시 진입(되돌림)할 때</strong> 지정가 매수를 들어갑니다.</li>
+<li><strong>손절가 (Stop Loss)</strong>: 해당 FVG를 만들어낸 직전 캔들의 저점 밑으로 이탈 시 손절.</li>
+<li><strong>익절가 (Take Profit)</strong>: 손익비 <strong>1 : 2</strong> 또는 <strong>1 : 3</strong> 으로 세팅.</li>
+</ul>
+<hr />
+<h2 id="_3">🔴 숏(매도) 포지션 진입 전략</h2>
+<p>롱 전략을 반대로 뒤집습니다. (한국 주식 현물은 공매도가 어려우나, 이 시그널을 '기존 주식 전량 매도 및 관망' 필터로 사용)</p>
+<ol>
+<li><strong>지정 시간</strong>: 장 초반 90분</li>
+<li><strong>기준선</strong>: 첫 상위 캔들(15분봉)의 저가(Low) 선에 주목.</li>
+<li><strong>돌파 및 FVG</strong>: 하위 캔들이 <strong>'저가 기준선'을 음봉 몸통으로 깨고 하락</strong>하며, 그 자리에 <strong>하락 FVG</strong>가 발생.</li>
+<li><strong>진입</strong>: 주가가 살짝 반등하여 <strong>하락 FVG 공간 안으로 되돌림을 줄 때</strong> 숏(매도) 진입.</li>
+<li><strong>손절가</strong>: FVG 생성 캔들 직전 고점 돌파 시 손절 / <strong>익절가</strong>: 손익비 1:2.</li>
+</ol>
+<hr />
+<h2 id="ai-next-step">🤖 AI 봇 적용 방안 (Next Step &amp; 한계점)</h2>
+<p>앞으로 <code>quant_analyzer.py</code> 모듈 쪽에 이 SMC 로직을 추가하려면 다음의 기법적 설계가 필요합니다.</p>
+<ol>
+<li><strong>시간 제한 모듈 (Time Window)</strong></li>
+<li><code>ai_trading_bot.py</code>루프에서 현재 시간이 09:00 ~ 10:30 사이가 아닐 경우, "FVG 전략 휴식(관망)" 모드로 전환하는 타임 락커(Time Locker) 구현.</li>
+<li><strong>멀티 타임프레임 데이터 호출</strong></li>
+<li>KIS API를 통해 단순 1일봉(Daily)이 아닌, <strong>15분봉과 5분봉 데이터</strong>를 동시에 가져와야 합니다.</li>
+<li>첫 15분봉의 High/Low 값을 변수에 저장(<code>target_high</code>, <code>target_low</code>).</li>
+<li><strong>배열 3개로 FVG 검출 로직 작성</strong></li>
+<li>판다스 데이터프레임에서 연속된 인덱스 <code>i-2, i-1, i</code> 캔들을 읽어들입니다.</li>
+<li>롱 갭: <code>High[i-2] &lt; Low[i]</code>가 True인지 검사하여 갭 박스의 상단(<code>Low[i]</code>)과 하단(<code>High[i-2]</code>) 좌표를 기록.</li>
+<li><strong>자동 되돌림 감지 알림</strong></li>
+<li>현재가가 기록해 둔 갭 박스 범위 안으로 들어오면 텔레그램 봇으로 <strong>"🚨 [캐스퍼 전략] 종목 X 상승 FVG 되돌림 도달! 매수 타점!"</strong> 알림을 전송.</li>
+</ol>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  맨위로
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.tabs", "navigation.sections", "navigation.top", "toc.integrate", "search.suggest", "search.highlight", "content.code.copy"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "\ud074\ub9bd\ubcf4\ub4dc\uc5d0 \ubcf5\uc0ac\ub428", "clipboard.copy": "\ud074\ub9bd\ubcf4\ub4dc\ub85c \ubcf5\uc0ac", "search.result.more.one": "\uc774 \ubb38\uc11c\uc5d0\uc11c 1\uac1c\uc758 \uac80\uc0c9 \uacb0\uacfc \ub354 \ubcf4\uae30", "search.result.more.other": "\uc774 \ubb38\uc11c\uc5d0\uc11c #\uac1c\uc758 \uac80\uc0c9 \uacb0\uacfc \ub354 \ubcf4\uae30", "search.result.none": "\uac80\uc0c9\uc5b4\uc640 \uc77c\uce58\ud558\ub294 \ubb38\uc11c\uac00 \uc5c6\uc2b5\ub2c8\ub2e4", "search.result.one": "1\uac1c\uc758 \uc77c\uce58\ud558\ub294 \ubb38\uc11c", "search.result.other": "#\uac1c\uc758 \uc77c\uce58\ud558\ub294 \ubb38\uc11c", "search.result.placeholder": "\uac80\uc0c9\uc5b4\ub97c \uc785\ub825\ud558\uc138\uc694", "search.result.term.missing": "\ud3ec\ud568\ub418\uc9c0 \uc54a\uc740 \uac80\uc0c9\uc5b4", "select.version": "\ubc84\uc804 \uc120\ud0dd"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>

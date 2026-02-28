@@ -19,13 +19,17 @@ class TelegramAgent:
 
     async def start_cmd(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """봇 시작 메시지"""
-        print(f"[Telegram] 📥 수신: /start (사용자명: {update.effective_user.first_name})")
+        from datetime import datetime
+        now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        print(f"[{now}] [Telegram] 📥 수신: /start (사용자명: {update.effective_user.first_name})")
         msg = "🤖 AI 트레이딩 봇 연결 성공!\n명령어:\n/help: 전체 사용법 및 도움말 확인\n/status [종목코드]: 추세 분석\n/balance: теку 잔고 조회\n/buy [종목]: 매수\n/sell [종목]: 매도"
         await update.message.reply_text(msg)
 
     async def help_cmd(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """도움말 출력"""
-        print(f"[Telegram] 📥 수신: /help")
+        from datetime import datetime
+        now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        print(f"[{now}] [Telegram] 📥 수신: /help")
         msg = (
             "💡 **AI 트레이딩 봇 사용법** 💡\n\n"
             "🔹 `/start`: 봇 인사말 및 기본 안내\n"
@@ -41,15 +45,19 @@ class TelegramAgent:
 
     async def balance_cmd(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """잔고 조회 프로세스"""
-        print(f"[Telegram] 📥 수신: /balance (잔고 조회 요청)")
+        from datetime import datetime
+        now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        print(f"[{now}] [Telegram] 📥 수신: /balance (잔고 조회 요청)")
         await update.message.reply_text("🔍 계좌 잔고를 조회 중입니다...")
         res_msg = self.client.fetch_balance()
         await update.message.reply_text(res_msg, parse_mode='Markdown')
 
     async def status_cmd(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """상태 조회 프로세스"""
+        from datetime import datetime
+        now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         cmd_text = " ".join(context.args) if context.args else ""
-        print(f"[Telegram] 📥 수신: /status {cmd_text}")
+        print(f"[{now}] [Telegram] 📥 수신: /status {cmd_text}")
         
         if len(context.args) == 0:
             await update.message.reply_text("👉 사용법: /status [종목코드]\n(예: /status 005930)")
@@ -70,8 +78,10 @@ class TelegramAgent:
 
     async def buy_cmd(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """매수 주문 접수"""
+        from datetime import datetime
+        now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         cmd_text = " ".join(context.args) if context.args else ""
-        print(f"[Telegram] 📥 수신: /buy {cmd_text}")
+        print(f"[{now}] [Telegram] 📥 수신: /buy {cmd_text}")
         
         if len(context.args) < 3:
              await update.message.reply_text("👉 사용법: /buy [종목코드] [수량] [지정가격]\n(예: /buy 005930 10 70000)")
@@ -85,8 +95,10 @@ class TelegramAgent:
 
     async def sell_cmd(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """매도 주문 접수"""
+        from datetime import datetime
+        now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         cmd_text = " ".join(context.args) if context.args else ""
-        print(f"[Telegram] 📥 수신: /sell {cmd_text}")
+        print(f"[{now}] [Telegram] 📥 수신: /sell {cmd_text}")
         
         if len(context.args) < 3:
              await update.message.reply_text("👉 사용법: /sell [종목코드] [수량] [지정가격]\n(예: /sell 005930 10 70000)")
@@ -100,7 +112,9 @@ class TelegramAgent:
 
     async def scheduled_report(self, context: ContextTypes.DEFAULT_TYPE):
         """스케줄러에 의해 5분마다 주기로 실행될 관심 종목 타점 스캔 및 스크리닝 발송"""
-        print("[Telegram] ⏰ 5분 주기 스케줄러 작동: 추천 종목 스캔 중...")
+        from datetime import datetime
+        now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        print(f"[{now}] [Telegram] ⏰ 5분 주기 스케줄러 작동: 추천 종목 스캔 중...")
         
         # quant_analyzer.py 에 정의된 대표 종목 사전(STOCK_NAMES)을 참조하여 관심 종목 풀 설정
         from quant_analyzer import STOCK_NAMES

@@ -17,9 +17,13 @@ def run_bot():
     if client.is_ready:
         print(f"KIS API가 설정되어 모의투자 계좌({client.account_no}) 기준으로 통신 대기 중입니다.")
     
-    # 테스트 구동: 삼전
-    test_ticker = "005930.KS"
-    df = client.fetch_ohlcv_mock(ticker=test_ticker, period="6mo")
+    # 삼성전자(005930) 일봉 데이터 수집
+    test_ticker = "005930"
+    df = client.fetch_ohlcv(stock_code=test_ticker, period_type="D")
+    
+    if df is None or df.empty:
+        print("❌ 데이터를 성공적으로 불러오지 못하여 봇 실행을 중단합니다.")
+        return
     
     print("\n--- [퀀트 분석 진행] ---")
     analyzed_df = analyzer.calculate_indicators(df)

@@ -1,5 +1,18 @@
 import pandas as pd
 import ta
+from datetime import datetime
+
+# 대표 종목명 매핑 사전 (추가 가능)
+STOCK_NAMES = {
+    "005930": "삼성전자",
+    "000660": "SK하이닉스",
+    "035420": "NAVER",
+    "035720": "카카오",
+    "005380": "현대차",
+    "005387": "현대차3우B",
+    "068270": "셀트리온",
+    "051910": "LG화학"
+}
 
 class QuantAnalyzer:
     def __init__(self):
@@ -68,13 +81,20 @@ class QuantAnalyzer:
         
         try:
             if 'Date' in latest.index:
-                date_str = latest['Date']
+                date_str = str(latest['Date'])
+                if len(date_str) == 8: # YYYYMMDD 형식이면 하이픈(-) 추가
+                    date_str = f"{date_str[:4]}-{date_str[4:6]}-{date_str[6:]}"
             elif hasattr(latest.name, 'strftime'):
                 date_str = latest.name.strftime('%Y-%m-%d')
             else:
                 date_str = str(latest.name)
         except:
             date_str = "최근 영업일"
+            
+        current_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        
+        # 종목명 찾기 (없으면 그냥 코드)
+        stock_name = STOCK_NAMES.get(ticker, ticker)
         
         # 로스 카메론 조건 판별
         ross_status = "⚪ 관망"
@@ -97,8 +117,8 @@ class QuantAnalyzer:
             casper_fvg = f"🔴 하락 FVG 생성 (갭 깊이: {gap:,.0f}원) | 🚫 강한 하방 모멘텀 관망 존: {latest['FVG_Bear_Btm']:,.0f} ~ {latest['FVG_Bear_Top']:,.0f}"
         
         report = f"""
-## 📊 [{ticker}] 전략 분석 리포트 ({date_str} 기준)
-
+## 📊 **[{stock_name}]** ({ticker}) 전략 분석 리포트
+⏱️ **기준 일시**: {date_str} (분석 시각: {current_time})
 **[현재 시장 가격 정보]**
 *   종가: {latest['Close']:,.0f} 원
 *   단기 평균(SMA 20): {latest['SMA_20']:,.0f} 원

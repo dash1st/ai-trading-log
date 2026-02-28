@@ -19,17 +19,22 @@ class TelegramAgent:
 
     async def start_cmd(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """봇 시작 메시지"""
+        print(f"[Telegram] 📥 수신: /start (사용자명: {update.effective_user.first_name})")
         msg = "🤖 AI 트레이딩 봇 연결 성공!\n명령어:\n/status [종목코드]: 추세 분석\n/balance: 현재 잔고 조회\n/buy [종목]: 매수\n/sell [종목]: 매도"
         await update.message.reply_text(msg)
 
     async def balance_cmd(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """잔고 조회 프로세스"""
+        print(f"[Telegram] 📥 수신: /balance (잔고 조회 요청)")
         await update.message.reply_text("🔍 계좌 잔고를 조회 중입니다...")
         res_msg = self.client.fetch_balance()
         await update.message.reply_text(res_msg, parse_mode='Markdown')
 
     async def status_cmd(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """상태 조회 프로세스"""
+        cmd_text = " ".join(context.args) if context.args else ""
+        print(f"[Telegram] 📥 수신: /status {cmd_text}")
+        
         if len(context.args) == 0:
             await update.message.reply_text("👉 사용법: /status [종목코드]\n(예: /status 005930)")
             return
@@ -49,6 +54,9 @@ class TelegramAgent:
 
     async def buy_cmd(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """매수 주문 접수"""
+        cmd_text = " ".join(context.args) if context.args else ""
+        print(f"[Telegram] 📥 수신: /buy {cmd_text}")
+        
         if len(context.args) < 3:
              await update.message.reply_text("👉 사용법: /buy [종목코드] [수량] [지정가격]\n(예: /buy 005930 10 70000)")
              return
@@ -61,6 +69,9 @@ class TelegramAgent:
 
     async def sell_cmd(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """매도 주문 접수"""
+        cmd_text = " ".join(context.args) if context.args else ""
+        print(f"[Telegram] 📥 수신: /sell {cmd_text}")
+        
         if len(context.args) < 3:
              await update.message.reply_text("👉 사용법: /sell [종목코드] [수량] [지정가격]\n(예: /sell 005930 10 70000)")
              return

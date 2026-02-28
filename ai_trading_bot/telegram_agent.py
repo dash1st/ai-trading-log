@@ -101,8 +101,10 @@ class TelegramAgent:
     async def scheduled_report(self, context: ContextTypes.DEFAULT_TYPE):
         """스케줄러에 의해 5분마다 주기로 실행될 관심 종목 타점 스캔 및 스크리닝 발송"""
         print("[Telegram] ⏰ 5분 주기 스케줄러 작동: 추천 종목 스캔 중...")
-        # 임의의 관심 종목 풀 (우량주 중심)
-        watch_list = ["005930", "000660", "035420", "035720", "005380"] 
+        
+        # quant_analyzer.py 에 정의된 대표 종목 사전(STOCK_NAMES)을 참조하여 관심 종목 풀 설정
+        from quant_analyzer import STOCK_NAMES
+        watch_list = list(STOCK_NAMES.keys())
         
         has_signal = False
         report_chunks = ["🚨 **[5분 주기 자동 스캔: 추천 종목 브리핑]** 🚨\n"]

@@ -117,6 +117,61 @@ class KisApiClient:
             print(f"[KIS_API] ❌ 데이터 조회 중 에러 발생: {e}")
             return None
     
+    def fetch_balance(self):
+        """계좌 잔고 조회"""
+        if not self.is_ready or not self.access_token:
+            return "❌ 인증 토큰이 없어 잔고를 조회할 수 없습니다."
+            
+        url = f"{self.domain}/uapi/domestic-stock/v1/trading/inquire-balance"
+        is_mock = "vts" in self.domain
+        tr_id = "VTTC8434R" if is_mock else "TTTC8434R"
+        
+        headers = {
+            "content-type": "application/json; charset=utf-8",
+            "authorization": f"Bearer {self.access_token}",
+            "appkey": self.app_key,
+            "appsecret": self.app_secret,
+            "tr_id": tr_id,
+        }
+        
+        account_parts = self.account_no.split("-") if "-" in self.account_no else [self.account_no, "01"]
+        params = {
+            "CANO": account_parts[0],
+            "ACNT_PRDT_CD": account_parts[1],
+            "AFHR_FLPR_YN": "N",
+            "OFL_YN": "",
+            "INQR_DVSN": "02",
+            "UNPR_DVSN": "01",
+            "FUND_STTL_ICLD_YN": "N",
+            "FNCG_AMT_AUTO_RDPT_YN": "N",
+            "PRCS_DVSN": "00",
+            "CTX_AREA_FK100": "",
+            "CTX_AREA_NK100": ""
+        }
+        
+        try:
+            res = requests.get(url, headers=headers, params=params)
+            if res.status_code == 200:
+                data = res.json()
+                if data["rt_cd"] == "0":
+                    out2 = data.get("output2", [{}])[0]
+                    dnca = int(out2.get("dnca_tot_amt", 0))    # 예수금
+                    tot = int(out2.get("tot_evlu_amt", 0))     # 총 평가금액
+                    net = int(out2.get("nass_amt", 0))         # 순자산
+                    
+                    msg = f"💰 **[계좌 잔고 현황]**\n" \
+                          f"💳 계좌: {self.account_no}\n" \
+                          f"💵 주문가능금액(예수금): {dnca:,} 원\n" \
+                          f"📈 총 평가금액: {tot:,} 원\n" \
+                          f"💎 순자산: {net:,} 원"
+                    return msg
+                else:
+                    return f"🔴 서버 거절: {data.get('msg1')}"
+            else:
+                return f"🔴 통신 오류: {res.status_code}"
+        except Exception as e:
+            return f"🔴 시스템 오류: {e}"
+            
     def _execute_order(self, stock_code, qty, price, order_type="BUY"):
         """ 내부 공통 주문 모듈 (매수/매도) """
         if not self.is_ready or not self.access_token:

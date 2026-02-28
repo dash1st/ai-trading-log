@@ -1,17 +1,17 @@
 import time
 from kis_api_client import KisApiClient
 from quant_analyzer import QuantAnalyzer
+from telegram_agent import TelegramAgent
 
 def run_bot():
     print("=" * 50)
     print("🚀 AI 트레이딩 봇 시작 (수동 판단 모드) 🚀")
     print("=" * 50)
     
-    # 1. API 클라이언트 초기화 (초기화 즉시 KIS 인증 로직 실행됨)
+    # 1. API 클라이언트 및 에이전트 초기화
     client = KisApiClient()
-    
-    # 2. 분석기 초기화
     analyzer = QuantAnalyzer()
+    telegram = TelegramAgent()
     
     print("\n--- [데이터 수집] ---")
     if client.is_ready:
@@ -24,12 +24,17 @@ def run_bot():
     print("\n--- [퀀트 분석 진행] ---")
     analyzed_df = analyzer.calculate_indicators(df)
     
-    print("\n--- [분석 리포트 출력] ---")
+    print("\n--- [분석 리포트 출력 및 전송] ---")
     report = analyzer.generate_report(test_ticker, analyzed_df)
     print(report)
     
+    # 텔레그램으로 전송
+    if telegram.is_ready:
+        print("\n[알림] 텔레그램으로 리포트 전송을 시도합니다...")
+        telegram.send_message(report)
+    
     print("=" * 50)
-    print("✅ 봇 실행 완료. KIS API 토큰 발급 테스트 및 퀀트 결과가 정상 동작했습니다.")
+    print("✅ 봇 실행 완료. KIS API 및 텔레그램 연동이 정상 동작했습니다.")
 
 if __name__ == "__main__":
     run_bot()

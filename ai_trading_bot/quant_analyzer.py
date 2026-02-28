@@ -70,6 +70,69 @@ class QuantAnalyzer:
 
         return df
 
+    def get_trading_signal(self, ticker, analyzed_df):
+        """
+        옵션 A: 지능형 퀀트 매매 시그널 판별기
+        단순 텍스트 리포트가 아닌, 실제 봇이 자동 매매를 집행할지 판단하고 투자 비중(weight)을 반환합니다.
+        바닥을 찍고 돌아서는 반등(Rebound) 순간을 포착하는 데 특화되어 있습니다.
+        """
+        if analyzed_df is None or len(analyzed_df) < 3:
+            return {"should_buy": False}
+            
+        latest = analyzed_df.iloc[-1]
+        prev = analyzed_df.iloc[-2]
+        
+        score = 0
+        reasons = []
+        
+        # 1. RSI 반등 확인 (떨어지는 칼날 회피, 바닥 딛고 상승 전환 포착)
+        if prev['RSI'] <= 35 and latest['RSI'] > prev['RSI']:
+            score += 40
+            reasons.append(f"RSI 바닥 반등({latest['RSI']:.1f})")
+            
+        # 2. MACD 크로스오버 (단기 골든 크로스)
+        if latest['MACD_Golden_Cross']:
+            score += 40
+            reasons.append("MACD 골든크로스 상승 전환")
+            
+        # 3. 유동성 갭 (FVG) 발생 여부
+        if latest['FVG_Bull']:
+            gap_size = latest['FVG_Bull_Top'] - latest['FVG_Bull_Btm']
+            score += 20
+            reasons.append(f"상승 FVG 발생({gap_size:,.0f}원)")
+            
+        # 4. 볼린저 밴드 하단 터치점
+        if latest['BB_Touch_Low']:
+            score += 10
+            reasons.append("BB 하단 터치")
+            
+        # 총점 기반 비중(가중치) 산출 (최대 3배수 베팅)
+        weight = 0.0
+        should_buy = False
+        grade = ""
+        
+        if score >= 80:
+            should_buy = True
+            weight = 3.0
+            grade = "S급(비중 3배)"
+        elif score >= 50:
+            should_buy = True
+            weight = 2.0
+            grade = "A급(비중 2배)"
+        elif score >= 40:
+            should_buy = True
+            weight = 1.0
+            grade = "B급(비중 1배)"
+            
+        if should_buy:
+            return {
+                "should_buy": True,
+                "weight": weight,
+                "reason": f"[{grade}] " + " + ".join(reasons)
+            }
+            
+        return {"should_buy": False}
+
     def generate_report(self, ticker, analyzed_df):
         """
         최신 분석 결과를 바탕으로 로스 카메론 및 캐스퍼 전략 발생 유무를 텔레그램 리포트용 텍스트로 요약 출력합니다.

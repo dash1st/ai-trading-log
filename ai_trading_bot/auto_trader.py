@@ -146,6 +146,13 @@ class AutoTrader:
                 msg = f"🎉 **[트레일링 스탑 매도 완료]** 🎉\n*   종목: {ticker}\n*   수량: {qty}주\n*   매수단가: {buy_price:,.0f} 원\n*   매도단가: {current_price:,.0f} 원\n*   (최고점 {hwm:,.0f}원에서 -{self.trailing_drop_percent}% 떨어져 익절 청산)\n*   **최종 수익률: +{profit_rate:.2f}%**\n*   **실현 손익: {realized_profit:,.0f}원**"
                 await self.telegram.client.bot.send_message(chat_id=self.chat_id, text=msg, parse_mode='Markdown')
 
+                # 블로그(매매 일지)에 자동 기록
+                try:
+                    from blog_writer import BlogWriter
+                    BlogWriter().write_trade_log(ticker, "LONG", buy_price, current_price, profit_rate, "트레일링 익절 청산")
+                except Exception as e:
+                    self.log(f"매매 일지 자동 작성 실패: {e}")
+
             # 2. 강제 손절 조건 달성
             elif profit_rate <= self.loss_percent:
                 self.log(f"🩸 [손절 라인 이탈] {ticker} | 손실률: {profit_rate:.2f}% | 원금 보호를 위해 강제 매도합니다.")
@@ -159,6 +166,13 @@ class AutoTrader:
                 
                 msg = f"🚨 **[자동 기계적 손절 완료]** 🚨\n*   종목: {ticker}\n*   수량: {qty}주\n*   매수단가: {buy_price:,.0f} 원\n*   매도단가: {current_price:,.0f} 원\n*   **최종 손실률: {profit_rate:.2f}%**\n*   **실현 손실: {realized_loss:,.0f}원**"
                 await self.telegram.client.bot.send_message(chat_id=self.chat_id, text=msg, parse_mode='Markdown')
+
+                # 블로그(매매 일지)에 자동 기록
+                try:
+                    from blog_writer import BlogWriter
+                    BlogWriter().write_trade_log(ticker, "LONG", buy_price, current_price, profit_rate, "기계적 손절선 이탈")
+                except Exception as e:
+                    self.log(f"매매 일지 자동 작성 실패: {e}")
 
     async def send_portfolio_status(self):
         """현재 보유 중인 포지션의 수익률 현황을 요약하여 텔레그램으로 발송"""

@@ -18,6 +18,35 @@ class TelegramAgent:
         else:
             self.is_ready = True
 
+    def _resolve_ticker(self, query: str):
+        """
+        사용자 입력(종목코드 또는 종목명)을 6자리 종목코드로 변환합니다.
+        반환: (종목코드, 에러메시지)
+        """
+        query = query.strip()
+        if query.isdigit() and len(query) >= 5:
+            return query.zfill(6), None
+            
+        from quant_analyzer import STOCK_NAMES
+        exact_match, partial_matches = None, []
+        
+        for code, name in STOCK_NAMES.items():
+            if query == name:
+                exact_match = code
+                break
+            elif query in name:
+                partial_matches.append((code, name))
+                
+        if exact_match:
+            return exact_match, None
+        if len(partial_matches) == 1:
+            return partial_matches[0][0], None
+        if len(partial_matches) > 1:
+            candidates = ", ".join([f"{n}({c})" for c, n in partial_matches])
+            return None, f"🧐 '{query}' 검색 결과가 여러 개입니다. 정확한 이름을 입력해주세요:\n👉 {candidates}"
+            
+        return query, None
+
     async def start_cmd(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """봇 시작 메시지"""
         from datetime import datetime
@@ -61,10 +90,15 @@ class TelegramAgent:
         print(f"[{now}] [Telegram] 📥 수신: /status {cmd_text}")
         
         if len(context.args) == 0:
-            await update.message.reply_text("👉 사용법: /status [종목코드]\n(예: /status 005930)")
+            await update.message.reply_text("👉 사용법: /status [종목코드/종목명]\n(예: /status 삼성전자 또는 /status 005930)")
             return
             
-        ticker = context.args[0]
+        raw_ticker = context.args[0]
+        ticker, err_msg = self._resolve_ticker(raw_ticker)
+        if err_msg:
+            await update.message.reply_text(err_msg)
+            return
+            
         await update.message.reply_text(f"🔍 '{ticker}' 분석 리포트 생성 중...")
         
         df = self.client.fetch_ohlcv(ticker, period_type="D")
@@ -85,10 +119,15 @@ class TelegramAgent:
         print(f"[{now}] [Telegram] 📥 수신: /buy {cmd_text}")
         
         if len(context.args) < 3:
-             await update.message.reply_text("👉 사용법: /buy [종목코드] [수량] [지정가격]\n(예: /buy 005930 10 70000)")
+             await update.message.reply_text("👉 사용법: /buy [종목코드/종목명] [수량] [지정가격]\n(예: /buy 삼성전자 10 70000)")
              return
              
-        ticker, qty, price = context.args[0], context.args[1], context.args[2]
+        raw_ticker, qty, price = context.args[0], context.args[1], context.args[2]
+        ticker, err_msg = self._resolve_ticker(raw_ticker)
+        if err_msg:
+            await update.message.reply_text(err_msg)
+            return
+            
         await update.message.reply_text(f"💸 매수 주문 실행 중... ({ticker} {qty}주, {price}원)")
         
         res_msg = self.client.execute_buy(ticker, qty, price)
@@ -102,10 +141,15 @@ class TelegramAgent:
         print(f"[{now}] [Telegram] 📥 수신: /sell {cmd_text}")
         
         if len(context.args) < 3:
-             await update.message.reply_text("👉 사용법: /sell [종목코드] [수량] [지정가격]\n(예: /sell 005930 10 70000)")
+             await update.message.reply_text("👉 사용법: /sell [종목코드/종목명] [수량] [지정가격]\n(예: /sell 삼성전자 10 70000)")
              return
              
-        ticker, qty, price = context.args[0], context.args[1], context.args[2]
+        raw_ticker, qty, price = context.args[0], context.args[1], context.args[2]
+        ticker, err_msg = self._resolve_ticker(raw_ticker)
+        if err_msg:
+            await update.message.reply_text(err_msg)
+            return
+            
         await update.message.reply_text(f"💸 매도 주문 실행 중... ({ticker} {qty}주, {price}원)")
         
         res_msg = self.client.execute_sell(ticker, qty, price)
@@ -173,17 +217,25 @@ class TelegramAgent:
         msg = f"🌙 **[정규장 마감 보고]**\n오늘 한국 주식시장 정규 거래 시간이 종료되었습니다.\n\n{icon} **오늘의 실현 손익**: {pnl:,.0f} 원\n\n수고하셨습니다. 봇은 내일 아침 다시 깨어납니다."
         await context.bot.send_message(chat_id=self.chat_id, text=msg)
 
+        # 블로그 (매매일지) 에도 장 마감 기록 남기기
+        try:
+            from blog_writer import BlogWriter
+            bw = BlogWriter()
+            summary = f"오늘의 실현 손익: {pnl:,.0f} 원"
+            bw.write_daily_closing_summary(summary)
+        except Exception as e:
+            print(f"블로그 작성 실패: {e}")
+
     async def scheduled_weekly_report(self, context: ContextTypes.DEFAULT_TYPE):
         """매주 금요일 오후 15:40 에 실행되는 주간 결산 (목업)"""
         msg = "📆 **[주간 결산 보고]**\n한 주간의 장이 모두 마감되었습니다. 봇이 수집한 이번 주 전체 누적 수익 및 승률 리포트입니다. (상세 내용은 곧 정식 구현됩니다.)\n\n즐거운 주말 보내세요!"
         await context.bot.send_message(chat_id=self.chat_id, text=msg)
 
-    def run(self):
-        """텔레그램 봇 메인 루프 (Polling) 실행"""
+    def get_app(self):
+        """python-telegram-bot의 Application 객체 생성 및 리턴"""
         if not self.is_ready:
-            return
+            return None
             
-        print("[Telegram] 🤖 텔레그램 수신 봇 폴링(Polling) 시작... (종료하려면 Ctrl+C)")
         app = ApplicationBuilder().token(self.token).build()
         
         # 명령어 핸들러 등록
@@ -214,5 +266,11 @@ class TelegramAgent:
         t_weekly = datetime.time(hour=15, minute=40, tzinfo=kr_tz)
         app.job_queue.run_daily(self.scheduled_weekly_report, time=t_weekly, days=(4,))
         
-        # 폴링 시작 (여기서 스레드 블락킹)
-        app.run_polling()
+        return app
+
+    def run(self):
+        """텔레그램 봇 메인 루프 (Polling) 실행"""
+        app = self.get_app()
+        if app:
+            print("[Telegram] 🤖 텔레그램 수신 봇 폴링(Polling) 시작... (종료하려면 Ctrl+C)")
+            app.run_polling()

@@ -1,18 +1,35 @@
 import pandas as pd
 import ta
 from datetime import datetime
+import FinanceDataReader as fdr
 
-# 대표 종목명 매핑 사전 (추가 가능)
-STOCK_NAMES = {
-    "005930": "삼성전자",
-    "000660": "SK하이닉스",
-    "035420": "NAVER",
-    "035720": "카카오",
-    "005380": "현대차",
-    "005387": "현대차3우B",
-    "068270": "셀트리온",
-    "051910": "LG화학"
-}
+# 전역 종목명 매핑 캐시 (초기 로딩 지연 방지)
+STOCK_NAMES = {}
+
+def load_korean_stock_names():
+    """KRX(KOSPI, KOSDAQ 등) 상장 종목 전체를 로드하여 STOCK_NAMES 사전에 매핑합니다."""
+    global STOCK_NAMES
+    if STOCK_NAMES:
+        return # 이미 로드됨
+        
+    try:
+        print("[QuantAnalyzer] 📊 한국 장 전체 종목(KRX) 리스트를 캐싱 중입니다...")
+        df_krx = fdr.StockListing('KRX')
+        # Code(6자리코드), Name(종목명) 컬럼 추출
+        new_names = dict(zip(df_krx['Code'], df_krx['Name']))
+        STOCK_NAMES.update(new_names)
+        print(f"[QuantAnalyzer] ✅ 총 {len(STOCK_NAMES)}개 종목 캐싱 완료!")
+    except Exception as e:
+        print(f"[QuantAnalyzer] ⚠️ 전체 종목 로딩 실패. ({e}) 일부 기본 종목만 사용합니다.")
+        fallback = {
+            "005930": "삼성전자", "000660": "SK하이닉스", "035420": "NAVER",
+            "035720": "카카오", "005380": "현대차", "068270": "셀트리온",
+            "051910": "LG화학", "042700": "한미반도체", "373220": "LG에너지솔루션"
+        }
+        STOCK_NAMES.update(fallback)
+
+# 모듈 로드(임포트) 시 1회 자동 실행
+load_korean_stock_names()
 
 class QuantAnalyzer:
     def __init__(self):

@@ -117,8 +117,61 @@ class KisApiClient:
             print(f"[KIS_API] ❌ 데이터 조회 중 에러 발생: {e}")
             return None
     
+    def _execute_order(self, stock_code, qty, price, order_type="BUY"):
+        """ 내부 공통 주문 모듈 (매수/매도) """
+        if not self.is_ready or not self.access_token:
+            return "[오류] 인증 토큰이 없습니다."
+        
+        url = f"{self.domain}/uapi/domestic-stock/v1/trading/order-cash"
+        
+        # 모의투자(vts)인지 실전투자(openapi)인지 주소로 구분하여 TR_ID 세팅
+        is_mock = "vts" in self.domain
+        
+        if order_type == "BUY":
+            tr_id = "VTTC0802U" if is_mock else "TTTC0802U" # 현금 매수
+        else:
+            tr_id = "VTTC0801U" if is_mock else "TTTC0801U" # 현금 매도
+            
+        headers = {
+            "content-type": "application/json; charset=utf-8",
+            "authorization": f"Bearer {self.access_token}",
+            "appkey": self.app_key,
+            "appsecret": self.app_secret,
+            "tr_id": tr_id,
+            "custtype": "P" # 개인
+        }
+        
+        # 계좌번호 포맷: 50171263-01 -> 앞 8자리, 뒤 2자리 분리
+        account_parts = self.account_no.split("-") if "-" in self.account_no else [self.account_no, "01"]
+        
+        body = {
+            "CANO": account_parts[0],
+            "ACNT_PRDT_CD": account_parts[1],
+            "PDNO": stock_code,
+            "ORD_DVSN": "00", # 00: 지정가 (시장가는 01)
+            "ORD_QTY": str(qty),
+            "ORD_UNPR": str(price)
+        }
+        
+        try:
+            res = requests.post(url, headers=headers, data=json.dumps(body))
+            if res.status_code == 200:
+                data = res.json()
+                if data["rt_cd"] == "0":
+                    msg = f"🟢 [주문 성공] {order_type} | 종목: {stock_code} | 수량: {qty}주 | 가격: {price}원\n(응답: {data['msg1']})"
+                    print(msg)
+                    return msg
+                else:
+                    msg = f"🔴 [주문 거부] {data['msg1']}"
+                    print(msg)
+                    return msg
+            else:
+                return f"🔴 [망 오류] HTTP 상태 코드: {res.status_code}"
+        except Exception as e:
+            return f"🔴 [시스템 오류] 주문 과정 에러: {e}"
+
     def execute_buy(self, stock_code, qty, price):
-        pass
+        return self._execute_order(stock_code, qty, price, "BUY")
 
     def execute_sell(self, stock_code, qty, price):
-        pass
+        return self._execute_order(stock_code, qty, price, "SELL")

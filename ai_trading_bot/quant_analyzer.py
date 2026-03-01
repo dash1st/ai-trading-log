@@ -14,7 +14,7 @@ def load_korean_stock_names():
         
     try:
         print("[QuantAnalyzer] 📊 한국 장 전체 종목(KRX) 리스트를 캐싱 중입니다...")
-        df_krx = fdr.StockListing('KRX')
+        df_krx = fdr.StockListing('KRX-DESC')
         # Code(6자리코드), Name(종목명) 컬럼 추출
         new_names = dict(zip(df_krx['Code'], df_krx['Name']))
         STOCK_NAMES.update(new_names)

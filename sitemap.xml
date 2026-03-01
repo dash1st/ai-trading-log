@@ -16,4 +16,12 @@
          <loc>http://43.202.65.40:8000/strategy/ross_cameron/</loc>
          <lastmod>2026-03-01</lastmod>
     </url>
+    <url>
+         <loc>http://43.202.65.40:8000/system/developer_log/</loc>
+         <lastmod>2026-03-01</lastmod>
+    </url>
+    <url>
+         <loc>http://43.202.65.40:8000/system/health_check/</loc>
+         <lastmod>2026-03-01</lastmod>
+    </url>
 </urlset>

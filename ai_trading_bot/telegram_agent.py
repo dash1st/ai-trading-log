@@ -155,6 +155,51 @@ class TelegramAgent:
         res_msg = self.client.execute_sell(ticker, qty, price)
         await update.message.reply_text(res_msg)
 
+    async def devlog_cmd(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        """개발자 전용 한줄 메모장"""
+        if not context.args:
+            await update.message.reply_text("👉 사용법: /devlog [기록할 내용]\n(예: /devlog 봇 생존확인용 배지 기능 추가)")
+            return
+            
+        message = " ".join(context.args)
+        await update.message.reply_text("📝 개발 일지에 메모록을 저장하고 깃허브에 반영하는 중입니다...")
+        
+        try:
+            from blog_writer import BlogWriter
+            bw = BlogWriter()
+            # 블로그 모듈을 통해 마크다운으로 기록하고 PUSH 트리거
+            bw.write_dev_log(message)
+            await update.message.reply_text("✅ 개발 일지 작성이 완료되었습니다.")
+        except Exception as e:
+            await update.message.reply_text(f"❌ 개발 일지 작성 실패: {e}")
+
+    async def scheduled_hourly_health_check(self, context: ContextTypes.DEFAULT_TYPE):
+        """매 시 정각 실행: CPU/RAM 현황 및 KIS 계좌 자산 현황을 Health Check 파일에 기록"""
+        from datetime import datetime
+        now = datetime.now()
+        
+        # 시스템 메트릭 조회
+        import psutil
+        cpu_usage = psutil.cpu_percent(interval=1)
+        # memory.percent gives the usage percentage
+        memory_usage = psutil.virtual_memory().percent
+        
+        # 계좌 총 자산 조회 (API 에러 시 0 처리)
+        try:
+            total_eval = self.client.get_balance()
+        except:
+            total_eval = 0
+            
+        print(f"[{now.strftime('%Y-%m-%d %H:%M:%S')}] [System] 💓 Hourly Health Check: CPU {cpu_usage}%, RAM {memory_usage}%, 자산: {total_eval}원")
+        
+        # 블로그 (매매일지) 에 헬스 체크 행 추가 
+        try:
+            from blog_writer import BlogWriter
+            bw = BlogWriter()
+            bw.write_health_check(cpu_usage, memory_usage, total_eval)
+        except Exception as e:
+            print(f"[System] ⚠️ Health check 작성 실패: {e}")
+
     async def scheduled_report(self, context: ContextTypes.DEFAULT_TYPE):
         """스케줄러에 의해 5분마다 주기로 실행될 관심 종목 타점 스캔 및 자동 매매 대기"""
         from auto_trader import AutoTrader
@@ -266,6 +311,13 @@ class TelegramAgent:
         t_weekly = datetime.time(hour=15, minute=40, tzinfo=kr_tz)
         app.job_queue.run_daily(self.scheduled_weekly_report, time=t_weekly, days=(4,))
         
+        # 1시간 주기로 정각마다 생존 보고 (분=0 으로 설정하여 매시 정각 구동)
+        app.job_queue.run_repeating(self.scheduled_hourly_health_check, interval=3600, first=0)
+        
+        # 명령어 핸들러 등록 (devlog 추가)
+        app.add_handler(CommandHandler("devlog", self.devlog_cmd))
+        app.add_handler(CommandHandler("개발", self.devlog_cmd))
+
         return app
 
     def run(self):

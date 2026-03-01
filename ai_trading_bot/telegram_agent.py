@@ -1,7 +1,7 @@
 import os
 from dotenv import load_dotenv
 from telegram import Update
-from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
+from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes, MessageHandler, filters
 
 class TelegramAgent:
     def __init__(self, client, analyzer, auto_trader=None):
@@ -276,6 +276,14 @@ class TelegramAgent:
         msg = "📆 **[주간 결산 보고]**\n한 주간의 장이 모두 마감되었습니다. 봇이 수집한 이번 주 전체 누적 수익 및 승률 리포트입니다. (상세 내용은 곧 정식 구현됩니다.)\n\n즐거운 주말 보내세요!"
         await context.bot.send_message(chat_id=self.chat_id, text=msg)
 
+    async def fallback_msg(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        """정의되지 않은 명령어(한글 명령어 포함) 또는 일반 텍스트 예외 처리"""
+        text = update.message.text if update.message and update.message.text else ""
+        if text.startswith('/'):
+            await update.message.reply_text(f"❓ 인식할 수 없는 명령어입니다.\n(텔레그램 정책상 한글 명령어는 지원하지 않습니다. 영문 명령어를 사용해주세요! 예: /devlog, /status)")
+        else:
+            await update.message.reply_text("🤖 봇을 조작하려면 `/` 로 시작하는 명령어를 입력해주세요. (전체 명령어 확인: /help)")
+
     def get_app(self):
         """python-telegram-bot의 Application 객체 생성 및 리턴"""
         if not self.is_ready:
@@ -316,6 +324,9 @@ class TelegramAgent:
         
         # 명령어 핸들러 등록 (devlog 추가)
         app.add_handler(CommandHandler("devlog", self.devlog_cmd))
+        
+        # 알 수 없는 명령어 및 텍스트 처리 (가장 마지막에 등록하여 Fallback 역할 수행)
+        app.add_handler(MessageHandler(filters.TEXT | filters.COMMAND, self.fallback_msg))
 
         return app
 

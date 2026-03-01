@@ -10,6 +10,8 @@ class BlogWriter:
     """
     def __init__(self, logs_dir='/home/ubuntu/ai_trading_bot/trading_log/docs/logs'):
         self.logs_dir = logs_dir
+        self.docs_dir = '/home/ubuntu/ai_trading_bot/trading_log/docs'
+        self.base_dir = '/home/ubuntu/ai_trading_bot'
         os.makedirs(self.logs_dir, exist_ok=True)
         self.deploy_script = '/home/ubuntu/ai_trading_bot/deploy_docs.sh'
 
@@ -85,16 +87,67 @@ class BlogWriter:
         with open(filepath, 'w', encoding='utf-8') as f:
             f.write(header)
 
-    def _trigger_deploy(self):
-        """GitHub 빌드 배포 스크립트를 논블로킹(백그라운드)으로 실행"""
+    def trigger_deploy(self):
+        """gh-pages 배포 스크립트를 백그라운드 구동"""
         try:
-            print("🚀 GitHub 배포 스크립트 실행 중...")
-            # 파이썬 봇 메인 루프를 방해하지 않도록 subprocess.Popen 으로 데몬처럼 던져놓음
-            subprocess.Popen(
-                ['bash', self.deploy_script],
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL,
-                cwd='/home/ubuntu/ai_trading_bot'
-            )
+            deploy_script = os.path.join(self.base_dir, "deploy_docs.sh")
+            print(f"🚀 GitHub 배포 스크립트 실행 중...")
+            subprocess.Popen(["bash", deploy_script], cwd=self.base_dir)
         except Exception as e:
-            print(f"❌ 블로그 배포 중 에러 발생: {e}")
+            print(f"⚠️ 배포 스크립트 실행 실패: {e}")
+
+    def write_dev_log(self, message: str):
+        """개발자 메모 기록 (최상단 삽입)"""
+        system_dir = os.path.join(self.docs_dir, 'system')
+        os.makedirs(system_dir, exist_ok=True)
+        filepath = os.path.join(system_dir, 'developer_log.md')
+        
+        today_date = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        new_entry = f"### 🕒 {today_date}\n- {message}\n\n---\n\n"
+        
+        if not os.path.exists(filepath):
+            with open(filepath, 'w', encoding='utf-8') as f:
+                f.write("# 👨‍💻 AI 트레이딩 봇 개발 일지\n\n이 문서는 봇 개발자의 실시간 메모 및 패치 노트입니다.\n\n---\n\n" + new_entry)
+        else:
+            with open(filepath, 'r', encoding='utf-8') as f:
+                content = f.read()
+            # 헤더 아래에 삽입
+            parts = content.split("---\n\n", 1)
+            if len(parts) > 1:
+                content = parts[0] + "---\n\n" + new_entry + parts[1]
+            else:
+                content = content + "\n---\n\n" + new_entry
+                
+            with open(filepath, 'w', encoding='utf-8') as f:
+                f.write(content)
+                
+        self.trigger_deploy()
+
+    def write_health_check(self, cpu: float, memory: float, total_asset: int):
+        """1시간 단위 봇 생존 및 자산 기록 (최상단 표 삽입)"""
+        system_dir = os.path.join(self.docs_dir, 'system')
+        os.makedirs(system_dir, exist_ok=True)
+        filepath = os.path.join(system_dir, 'health_check.md')
+        
+        today_date = datetime.now().strftime('%Y-%m-%d %H:%M')
+        log_line = f"| {today_date} | ✅ 정상 구동중 | {cpu}% | {memory}% | {total_asset:,.0f} 원 |\n"
+        
+        if not os.path.exists(filepath):
+            with open(filepath, 'w', encoding='utf-8') as f:
+                f.write("# 💓 AI 봇 헬스 체크 및 자산 추적\n\n매 시간 정각마다 봇이 스스로 생존을 보고합니다.\n\n")
+                f.write("## 🏥 System Status\n\n")
+                f.write("| 점검 일시 | 상태 | CPU 점유율 | RAM 점유율 | KIS 계좌 총 자산 |\n")
+                f.write("| :--- | :--- | :---: | :---: | :---: |\n")
+                f.write(log_line)
+        else:
+            with open(filepath, 'r', encoding='utf-8') as f:
+                lines = f.readlines()
+            for i, line in enumerate(lines):
+                if line.strip().startswith("| :---"):
+                    lines.insert(i + 1, log_line)
+                    break
+            with open(filepath, 'w', encoding='utf-8') as f:
+                f.writelines(lines)
+                
+        self.trigger_deploy()
+        self.trigger_deploy()

@@ -316,7 +316,6 @@ class TelegramAgent:
         
         # 명령어 핸들러 등록 (devlog 추가)
         app.add_handler(CommandHandler("devlog", self.devlog_cmd))
-        app.add_handler(CommandHandler("개발", self.devlog_cmd))
 
         return app
 

@@ -21,6 +21,7 @@ class TelegramAgent:
     def _resolve_ticker(self, query: str):
         """
         사용자 입력(종목코드 또는 종목명)을 6자리 종목코드로 변환합니다.
+        영문 대소문자 및 띄어쓰기를 무시하고 검색합니다.
         반환: (종목코드, 에러메시지)
         """
         query = query.strip()
@@ -30,11 +31,15 @@ class TelegramAgent:
         from quant_analyzer import STOCK_NAMES
         exact_match, partial_matches = None, []
         
+        # 정규화: 띄어쓰기 제거 및 소문자 변환
+        normalized_query = query.replace(" ", "").lower()
+        
         for code, name in STOCK_NAMES.items():
-            if query == name:
+            normalized_name = name.replace(" ", "").lower()
+            if normalized_query == normalized_name:
                 exact_match = code
                 break
-            elif query in name:
+            elif normalized_query in normalized_name:
                 partial_matches.append((code, name))
                 
         if exact_match:

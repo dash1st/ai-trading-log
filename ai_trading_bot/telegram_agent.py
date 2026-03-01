@@ -90,10 +90,10 @@ class TelegramAgent:
         print(f"[{now}] [Telegram] 📥 수신: /status {cmd_text}")
         
         if len(context.args) == 0:
-            await update.message.reply_text("👉 사용법: /status [종목코드/종목명]\n(예: /status 삼성전자 또는 /status 005930)")
+            await update.message.reply_text("👉 사용법: /status [종목코드/종목명]\n(예: /status 삼성전자 또는 /status lg display)")
             return
             
-        raw_ticker = context.args[0]
+        raw_ticker = " ".join(context.args)
         ticker, err_msg = self._resolve_ticker(raw_ticker)
         if err_msg:
             await update.message.reply_text(err_msg)
@@ -119,10 +119,18 @@ class TelegramAgent:
         print(f"[{now}] [Telegram] 📥 수신: /buy {cmd_text}")
         
         if len(context.args) < 3:
-             await update.message.reply_text("👉 사용법: /buy [종목코드/종목명] [수량] [지정가격]\n(예: /buy 삼성전자 10 70000)")
+             await update.message.reply_text("👉 사용법: /buy [종목명] [수량] [지정가격]\n(예: /buy lg display 10 10000)")
              return
              
-        raw_ticker, qty, price = context.args[0], context.args[1], context.args[2]
+        # 종목명 띄어쓰기 처리를 위해 마지막 두 개를 수량/가격으로 고정하고 나머지는 종목명으로 합침
+        try:
+            qty = int(context.args[-2])
+            price = int(context.args[-1])
+        except ValueError:
+            await update.message.reply_text("❌ 수량과 가격은 숫자로 입력해주세요.")
+            return
+            
+        raw_ticker = " ".join(context.args[:-2])
         ticker, err_msg = self._resolve_ticker(raw_ticker)
         if err_msg:
             await update.message.reply_text(err_msg)
@@ -141,10 +149,18 @@ class TelegramAgent:
         print(f"[{now}] [Telegram] 📥 수신: /sell {cmd_text}")
         
         if len(context.args) < 3:
-             await update.message.reply_text("👉 사용법: /sell [종목코드/종목명] [수량] [지정가격]\n(예: /sell 삼성전자 10 70000)")
+             await update.message.reply_text("👉 사용법: /sell [종목명] [수량] [지정가격]\n(예: /sell lg display 10 12000)")
              return
              
-        raw_ticker, qty, price = context.args[0], context.args[1], context.args[2]
+        # 종목명 띄어쓰기 처리를 위해 마지막 두 개를 수량/가격으로 고정하고 나머지는 종목명으로 합침
+        try:
+            qty = int(context.args[-2])
+            price = int(context.args[-1])
+        except ValueError:
+            await update.message.reply_text("❌ 수량과 가격은 숫자로 입력해주세요.")
+            return
+            
+        raw_ticker = " ".join(context.args[:-2])
         ticker, err_msg = self._resolve_ticker(raw_ticker)
         if err_msg:
             await update.message.reply_text(err_msg)

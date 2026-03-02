@@ -10,6 +10,6 @@ sudo systemctl restart trading_dashboard
 
 cd trading_log
 echo "🚀 GitHub Pages로 최신 트레이딩 대시보드를 배포합니다..."
-mkdocs gh-deploy --force --clean
+mkdocs gh-deploy --force --clean --remote-name pages
 
 echo "✅ 배포가 완료되었습니다!"

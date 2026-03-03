@@ -4,6 +4,21 @@
 
 ---
 
+### 🕒 2026-03-01 03:47:06
+- **[Automated Git Log]** fix: normalize english and korean spaces for robust stock ticker resolution
+
+---
+
+### 🕒 2026-03-01 03:34:20
+- **[Automated Git Log]** fix: change KRX to KRX-DESC in fdr to bypass broken KRX api endpoint
+
+---
+
+### 🕒 2026-03-01 03:31:28
+- **[Automated Git Log]** fix: resolve multi-word stock name argument parsing bug in telegram commands
+
+---
+
 ### 🕒 2026-03-01 03:22:04
 - chore: sync all latest files and docs to repository
 

@@ -1,31 +1,61 @@
 site_name: AI 트레이딩 봇 모의투자 일지
 site_url: http://43.202.65.40:8000
 site_description: 트레이딩 봇의 모의투자 결과, 백테스트, 전략 분석 리포트 보관소
-
 theme:
   name: windmill
   custom_dir: overrides
-
 plugins:
-  - search
-
+- search
 markdown_extensions:
-  - admonition
-  - pymdownx.details
-  - pymdownx.superfences
-  - pymdownx.tabbed:
-      alternate_style: true 
-  - pymdownx.magiclink
-  - pymdownx.tasklist:
-      custom_checkbox: true
-
+- admonition
+- pymdownx.details
+- pymdownx.superfences
+- pymdownx.tabbed:
+    alternate_style: true
+- pymdownx.magiclink
+- pymdownx.tasklist:
+    custom_checkbox: true
 nav:
-  - 🏠 홈: index.md
-  - 📈 매매 일지:
-    - 2026년 2월: logs/2026-02.md
-  - 🧠 트레이딩 전략:
-    - Casper FVG 전략: strategy/casper_fvg.md
-    - Ross Cameron 돌파 전략: strategy/ross_cameron.md
-  - 🛠️ 시스템 로깅:
-    - 👨‍💻 개발 로그: system/developer_log.md
-    - 💓 헬스 체크: system/health_check.md
+- 🏠 홈: index.md
+- 📈 매매 일지:
+  - 2026년 2월: logs/2026-02.md
+- 🧠 트레이딩 전략:
+  - Casper FVG 전략: strategy/casper_fvg.md
+  - Ross Cameron 돌파 전략: strategy/ross_cameron.md
+- 🛠️ 시스템 로깅:
+  - 👨‍💻 개발 로그: system/developer_log.md
+  - 💓 헬스 체크: system/health_check.md
+- 🚀 쿠버네티스 스터디:
+  - Intro & Misc: kubernetes_study/00_intro_and_misc.md
+  - Day 1: kubernetes_study/day_01.md
+  - Day 2: kubernetes_study/day_02.md
+  - Day 3: kubernetes_study/day_03.md
+  - Day 4: kubernetes_study/day_04.md
+  - Day 5: kubernetes_study/day_05.md
+  - Day 6: kubernetes_study/day_06.md
+  - Day 7: kubernetes_study/day_07.md
+  - Day 8: kubernetes_study/day_08.md
+  - Day 9: kubernetes_study/day_09.md
+  - Day 10: kubernetes_study/day_10.md
+  - Day 11: kubernetes_study/day_11.md
+  - Day 12: kubernetes_study/day_12.md
+  - Day 13: kubernetes_study/day_13.md
+  - Day 14: kubernetes_study/day_14.md
+  - Day 15: kubernetes_study/day_15.md
+  - Day 16: kubernetes_study/day_16.md
+  - Day 17: kubernetes_study/day_17.md
+  - Day 18: kubernetes_study/day_18.md
+  - Day 19: kubernetes_study/day_19.md
+  - Day 20: kubernetes_study/day_20.md
+  - Day 21: kubernetes_study/day_21.md
+  - Day 22: kubernetes_study/day_22.md
+  - Day 23: kubernetes_study/day_23.md
+  - Day 24: kubernetes_study/day_24.md
+  - Day 25: kubernetes_study/day_25.md
+  - Day 26: kubernetes_study/day_26.md
+  - Day 27: kubernetes_study/day_27.md
+  - Day 28: kubernetes_study/day_28.md
+  - Day 29: kubernetes_study/day_29.md
+  - Day 30: kubernetes_study/day_30.md
+  - Day 31: kubernetes_study/day_31.md
+  - Day 32: kubernetes_study/day_32.md

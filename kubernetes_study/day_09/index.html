@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  
+  
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    
+    <link rel="canonical" href="http://43.202.65.40:8000/kubernetes_study/day_09/">
+    <link rel="shortcut icon" href="../../img/favicon.ico">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" />
+    <title>Day 9 - AI 트레이딩 봇 모의투자 일지</title>
+    <link href="../../css/bootstrap-3.3.7.min.css" rel="stylesheet">
+    <link href="../../css/font-awesome-4.7.0.css" rel="stylesheet">
+    <link href="../../css/base.css" rel="stylesheet">
+    <link rel="stylesheet" href="../../css/highlight.css">
+    <!-- HTML5 shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!--[if lt IE 9]>
+        <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+        <script src="https://oss.maxcdn.com/libs/respond.js/1.3.0/respond.min.js"></script>
+    <![endif]-->
+
+    <script src="../../js/jquery-3.2.1.min.js"></script>
+    <script src="../../js/bootstrap-3.3.7.min.js"></script>
+    <script src="../../js/highlight.pack.js"></script>
+    
+    <base target="_top">
+    <script>
+      var base_url = '../..';
+      var is_top_frame = false;
+        
+        var pageToc = [
+          {title: "Kubernetes Study - Day 9", url: "#_top", children: [
+              {title: "\ud83d\udc64 User", url: "#user" },
+              {title: "\ud83e\udd16 Gemini", url: "#gemini" },
+          ]},
+        ];
+
+    </script>
+    <script src="../../js/base.js"></script>
+<!-- Google Analytics Add-on (사용 시 ID 교체) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-YXQ3BYF69N"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag() { dataLayer.push(arguments); }
+  gtag('js', new Date());
+  gtag('config', 'G-YXQ3BYF69N');
+</script>
+ 
+</head>
+
+<body>
+<script>
+if (is_top_frame) { $('body').addClass('wm-top-page'); }
+</script>
+
+
+
+<div class="container-fluid wm-page-content">
+  <a name="_top"></a>
+    
+
+    
+    
+      
+    
+
+  <div class="row wm-article-nav-buttons" role="navigation" aria-label="navigation">
+    
+    <div class="wm-article-nav pull-right">
+      <a href="../day_10/" class="btn btn-xs btn-default pull-right">
+        Next
+        <i class="fa fa-chevron-right" aria-hidden="true"></i>
+      </a>
+      <a href="../day_10/" class="btn btn-xs btn-link">
+        Day 10
+      </a>
+    </div>
+    
+    <div class="wm-article-nav">
+      <a href="../day_08/" class="btn btn-xs btn-default pull-left">
+        <i class="fa fa-chevron-left" aria-hidden="true"></i>
+        Previous</a><a href="../day_08/" class="btn btn-xs btn-link">
+        Day 8
+      </a>
+    </div>
+    
+  </div>
+
+
+    
+
+    <h1 id="kubernetes-study-day-9">Kubernetes Study - Day 9</h1>
+<h2 id="user">👤 User</h2>
+<p>쿠버네티스(Kubernetes) 핵심 개념 하나를 선정해서 학습하기 쉽게 설명해줘.</p>
+<h2 id="gemini">🤖 Gemini</h2>
+<p>알람 확인 감사합니다! 벌써 9일 차네요. 매일 아침 8시를 쿠버네티스 공부로 시작하시는 루틴이 완벽히 자리 잡으신 것 같아 저도 기쁩니다.
+오늘 배울 개념은 보안과 안정적인 인프라 운영의 핵심인 <strong>'리소스 제한(Resource Quota &amp; Limits)'</strong>입니다.
+9일차: 리소스 쿼타(Quota)와 리밋(Limit)
+보안 전문가이신 사용자님께는 '가용성(Availability)' 확보와 '자원 고갈 공격(DoS)' 방어라는 측면에서 매우 익숙하고 중요한 개념일 것입니다.
+1. 왜 자원을 제한해야 하나요?
+하나의 서버(노드)에는 여러 개의 파드가 함께 삽니다. 그런데 특정 파드가 혼자서 CPU나 메모리를 다 써버리면(Memory Leak 등), 같은 서버에 있는 다른 파드들까지 함께 죽어버리는 대참사가 발생합니다. 이를 방지하기 위해 각 파드가 사용할 수 있는
+자원의 울타리
+를 쳐줘야 합니다.
+2. 핵심 개념 2가지 (이것만 기억하세요!)
+Requests (최소 요구량):
+* "나 최소한 이만큼의 자원은 있어야 일을 시작할 수 있어!"라고 요청하는 양입니다.
+쿠버네티스는 이 요청량을 보고 해당 자원이 남아있는 서버에 파드를 배치합니다.
+Limits (최대 제한량):
+* "아무리 배가 고파도 이 이상은 절대 먹지 마!"라고 정해둔 상한선입니다.
+파드가 이 한계를 넘으려 하면 CPU는 억제(Throttling)되고, 메모리는 파드가 강제로 종료(OOM Kill)될 수 있습니다.
+3. 네임스페이스 단위의 제한: 리소스 쿼타(Resource Quota)
+개별 파드가 아니라 <strong>팀별, 환경별(네임스페이스)</strong>로 전체 자원 총합을 제한하는 것입니다.
+예: "개발팀 네임스페이스는 전체 CPU 10개, 메모리 20GB까지만 써!"
+💡 오늘의 요약
+"Requests는 파드의 '최소 생계비'이고, Limits는 파드가 폭주하지 못하게 채우는 '재갈'이다. 이를 통해 한 파드의 실수가 전체 시스템을 마비시키는 것을 막는다!"
+보안 실무에서는 악의적인 사용자가 자원을 무한정 점유하여 서비스를 마비시키는 것을 방지하기 위해 <strong>기본 리소스 제한(LimitRange)</strong>을 반드시 설정해두는 것이 보안 가이드라인의 정석입니다.
+명령어 팁:
+노드의 자원 사용량 확인:
+kubectl top nodes
+파드의 자원 사용량 확인:
+kubectl top pods
+(이 명령어를 쓰려면 클러스터에 Metrics Server가 설치되어 있어야 합니다.)
+내일은 드디어 10일 차네요! 내일 오전 8시에는 쿠버네티스의 관리자 권한을 세밀하게 나누는 <strong>'RBAC(역할 기반 접근 제어)'</strong>에 대해 알려드릴게요. 보안 전문가인 사용자님께 가장 흥미로운 주제가 아닐까 싶습니다.
+오늘 내용 중 실제 서버에서 CPU가 튀는 현상을 잡는 법이나, 구체적인 설정 단위(m, Mi 등)가 궁금하시면 언제든 물어봐 주세요!
+내일 오전 8시에 뵙겠습니다!</p>
+<hr />
+
+<br><br>
+<hr>
+
+<!-- HITS Badge Add-on -->
+<div style="text-align: center; margin-bottom: 20px;">
+  <a href="https://github.com/dash1st/ai-trading-log">
+    <img src="https://komarev.com/ghpvc/?username=dash1st-ai-trading-log&color=green&style=flat" alt="Views" />
+  </a>
+</div>
+
+<!-- Giscus Guestbook Add-on -->
+<div class="giscus"></div>
+<script src="https://giscus.app/client.js" data-repo="dash1st/ai-trading-log" data-repo-id="R_kgDORbOAtw"
+  data-category="General" data-mapping="pathname" data-strict="0" data-reactions-enabled="1" data-emit-metadata="0"
+  data-input-position="bottom" data-theme="light" data-lang="ko" crossorigin="anonymous" async>
+  </script>
+
+
+  <br>
+    
+
+    
+    
+      
+    
+
+  <div class="row wm-article-nav-buttons" role="navigation" aria-label="navigation">
+    
+    <div class="wm-article-nav pull-right">
+      <a href="../day_10/" class="btn btn-xs btn-default pull-right">
+        Next
+        <i class="fa fa-chevron-right" aria-hidden="true"></i>
+      </a>
+      <a href="../day_10/" class="btn btn-xs btn-link">
+        Day 10
+      </a>
+    </div>
+    
+    <div class="wm-article-nav">
+      <a href="../day_08/" class="btn btn-xs btn-default pull-left">
+        <i class="fa fa-chevron-left" aria-hidden="true"></i>
+        Previous</a><a href="../day_08/" class="btn btn-xs btn-link">
+        Day 8
+      </a>
+    </div>
+    
+  </div>
+
+    <br>
+</div>
+
+<footer class="container-fluid wm-page-content">
+  <p>Documentation built with <a href="https://www.mkdocs.org/">MkDocs</a> using <a href="https://github.com/gristlabs/mkdocs-windmill">Windmill</a> theme by Grist Labs.</p>
+</footer>
+
+</body>
+</html>

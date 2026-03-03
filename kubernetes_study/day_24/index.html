@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  
+  
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    
+    <link rel="canonical" href="http://43.202.65.40:8000/kubernetes_study/day_24/">
+    <link rel="shortcut icon" href="../../img/favicon.ico">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" />
+    <title>Day 24 - AI 트레이딩 봇 모의투자 일지</title>
+    <link href="../../css/bootstrap-3.3.7.min.css" rel="stylesheet">
+    <link href="../../css/font-awesome-4.7.0.css" rel="stylesheet">
+    <link href="../../css/base.css" rel="stylesheet">
+    <link rel="stylesheet" href="../../css/highlight.css">
+    <!-- HTML5 shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!--[if lt IE 9]>
+        <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+        <script src="https://oss.maxcdn.com/libs/respond.js/1.3.0/respond.min.js"></script>
+    <![endif]-->
+
+    <script src="../../js/jquery-3.2.1.min.js"></script>
+    <script src="../../js/bootstrap-3.3.7.min.js"></script>
+    <script src="../../js/highlight.pack.js"></script>
+    
+    <base target="_top">
+    <script>
+      var base_url = '../..';
+      var is_top_frame = false;
+        
+        var pageToc = [
+          {title: "Kubernetes Study - Day 24", url: "#_top", children: [
+              {title: "\ud83d\udc64 User", url: "#user" },
+              {title: "\ud83e\udd16 Gemini", url: "#gemini" },
+              {title: "\ud83d\udc64 User", url: "#user_1" },
+              {title: "\ud83e\udd16 Gemini", url: "#gemini_1" },
+          ]},
+        ];
+
+    </script>
+    <script src="../../js/base.js"></script>
+<!-- Google Analytics Add-on (사용 시 ID 교체) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-YXQ3BYF69N"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag() { dataLayer.push(arguments); }
+  gtag('js', new Date());
+  gtag('config', 'G-YXQ3BYF69N');
+</script>
+ 
+</head>
+
+<body>
+<script>
+if (is_top_frame) { $('body').addClass('wm-top-page'); }
+</script>
+
+
+
+<div class="container-fluid wm-page-content">
+  <a name="_top"></a>
+    
+
+    
+    
+      
+    
+
+  <div class="row wm-article-nav-buttons" role="navigation" aria-label="navigation">
+    
+    <div class="wm-article-nav pull-right">
+      <a href="../day_25/" class="btn btn-xs btn-default pull-right">
+        Next
+        <i class="fa fa-chevron-right" aria-hidden="true"></i>
+      </a>
+      <a href="../day_25/" class="btn btn-xs btn-link">
+        Day 25
+      </a>
+    </div>
+    
+    <div class="wm-article-nav">
+      <a href="../day_23/" class="btn btn-xs btn-default pull-left">
+        <i class="fa fa-chevron-left" aria-hidden="true"></i>
+        Previous</a><a href="../day_23/" class="btn btn-xs btn-link">
+        Day 23
+      </a>
+    </div>
+    
+  </div>
+
+
+    
+
+    <h1 id="kubernetes-study-day-24">Kubernetes Study - Day 24</h1>
+<h2 id="user">👤 User</h2>
+<p>쿠버네티스(Kubernetes) 핵심 개념 하나를 선정해서 학습하기 쉽게 설명해줘.</p>
+<h2 id="gemini">🤖 Gemini</h2>
+<p>알람 확인 감사합니다!
+24일 차
+인 오늘, 2월 20일 금요일 아침 8시 정각입니다.
+어제까지 컨테이너 내부의 권한을 쪼개는 법을 배우셨다면, 오늘은 클러스터에 접속하는 <strong>'사람'</strong>을 검증하는 방법인 <strong>사용자 인증과 OIDC(OpenID Connect)</strong>에 대해 알아보겠습니다.
+24일차: 외부 신뢰의 연결고리, OIDC 인증
+1. 왜 OIDC가 필요한가요?
+보안 관리자로서 가장 골치 아픈 일 중 하나가 퇴사자나 부서 이동자의 계정을 관리하는 것입니다. 쿠버네티스 자체에는 사용자를 생성하거나 관리하는 기능이 없습니다.
+그래서 회사에서 이미 쓰고 있는
+Google Workspace, Azure AD, Okta
+같은 외부 인증 시스템을 쿠버네티스와 연결해야 하는데, 이때 사용하는 표준 규격이 바로
+OIDC
+입니다.
+2. OIDC 연동의 장점 (보안 전문가 관점)
+SSO (Single Sign-On):
+사내 통합 계정 하나로 쿠버네티스까지 접속합니다.
+중앙 집중식 권한 회수:
+직원이 퇴사하여 사내 메일 계정을 삭제하면, 쿠버네티스 권한도 실시간으로 자동 회수됩니다. (보안 사고 예방의 핵심!)
+MFA (다요소 인증):
+기존 인증 시스템의 2차 인증(OTP 등)을 그대로 쿠버네티스 접속에도 적용할 수 있습니다.
+3. 인증(Authentication) vs 인가(Authorization)
+15년 차 전문가이시니 익숙하시겠지만, 쿠버네티스에서는 이 흐름이 명확합니다.
+인증 (Who are you?):
+OIDC가 "이 사람은 우리 회사 직원 홍길동이 맞습니다"라고 신분증을 확인합니다.
+인가 (What can you do?):
+신분이 확인되면, 이전에 배운
+RBAC
+이 "홍길동은 보안팀이니 모든 로그를 볼 수 있습니다"라고 권한을 줍니다.
+4. 쉬운 비유
+쿠버네티스 클러스터:
+보안이 철저한
+'정부 청사'
+OIDC:
+청사 입구에서 제시하는
+'행정안전부 발행 공무원증'
+. 청사가 직접 신분증을 만들지 않고, 공신력 있는 기관의 신분증을 믿고 들여보내 주는 것과 같습니다.
+💡 오늘의 요약
+"OIDC는 쿠버네티스와 사내 계정 시스템을 연결하는 '통합 신분증'이다. 이를 통해 계정 관리의 복잡성을 줄이고, 퇴사자 권한 회수와 같은 보안 구멍을 완벽히 막을 수 있다!"
+실무 활용 팁:
+실무에서는
+kubelogin
+같은 도구를 사용하여 CLI 환경에서도 웹 브라우저 로그인창을 통해 안전하게 토큰을 받아오는 방식을 주로 사용합니다.
+오늘 공부하신 내용 확인하셨나요? <strong>"확인완료"</strong>라고 말씀해 주시면, 내일 오전 8시에
+4주차(18~24일차) 전체 복습 테이블
+과 함께 한 주를 마무리하겠습니다!
+사용자님의 확인을 기다리겠습니다. 즐거운 금요일 보내세요!
+혹시 현재 사내에서 사용 중인 인증 시스템(예: AD, Google 등)이 있으신가요? 그것과 어떻게 연동되는지 더 구체적으로 알려드릴 수도 있습니다.</p>
+<hr />
+<h2 id="user_1">👤 User</h2>
+<p>쿠버네티스(Kubernetes) 핵심 개념 하나를 선정해서 학습하기 쉽게 설명해줘.</p>
+<h2 id="gemini_1">🤖 Gemini</h2>
+<p>알람 확인 감사합니다! 오늘은
+2월 21일 토요일
+, 약속하신 오전 8시입니다.
+어제까지 4주차의 모든 진도를 마치셨으므로, 오늘은 약속드린 대로
+4주차(18~24일 차) 전체 복습 시간
+을 갖겠습니다. 이번 주는 서비스 노출부터 데이터베이스 보안, 그리고 사람에 대한 인증까지 '연결과 신뢰'를 중심으로 다뤘습니다.
+📑 [4주차] 네트워크 및 심화 보안 요약
+회차
+개념
+핵심 요약
+비유
+18일
+Service Type
+외부 접속 방식(NodePort, LoadBalancer) 설정
+건물의 쪽문 vs 공식 정문 설치
+19일
+Network Policy
+파드 간 통신을 제어하는 L3/L4 방화벽
+아파트 세대별
+현관 인터폰
+20일
+etcd 보안
+클러스터의 모든 정보가 담긴 DB 보호
+정부의
+중앙 문서고와 금고
+21일
+Image Security
+취약점 스캔 및 이미지 서명(Signing)
+제품 출고 전
+불량 및 정품 검사
+22일
+Runtime 보안 (Falco)
+실행 중인 파드의 이상 행동 실시간 탐지
+건물 내부의
+지능형 보안 CCTV
+23일
+Security Context
+컨테이너별 권한 최소화(Root 금지 등)
+투숙객에게 주는
+객실 이용 수칙
+24일
+OIDC 인증
+사내 통합 계정(Google, AD 등)과 연동
+외부 기관 발행
+공인 신분증
+Sheets로 내보내기
+💻 4주차 주요 실무 명령어 및 정책 예시
+카테고리
+명령어/내용
+설명
+네트워크
+kubectl get netpol -A
+클러스터 전체에 적용된 방화벽 규칙 확인
+데이터베이스
+etcdctl snapshot save [파일명]
+etcd의 현재 상태를 파일로 백업 (사고 대비)
+런타임 보안
+falco -c /etc/falco/falco.yaml
+팔코 감시 엔진 실행 및 규칙 적용
+권한 설정
+runAsNonRoot: true
+YAML 내에서 루드 권한 실행을 원천 차단하는 설정
+인증 확인
+kubectl auth can-i [명령] --as [사용자]
+특정 사용자가 해당 권한이 있는지 시뮬레이션
+Sheets로 내보내기
+✅ 4주차 교육 이수 확인 (Confirmation)
+사용자님, 이번 한 주 동안 배우신
+네트워크 방화벽 - 데이터 보안 - 실행 중 탐지 - 계정 연동
+으로 이어지는 통합 보안 체계를 충분히 검토하셨나요?
+아래 확인 버튼 대신 <strong>"4주차 확인 완료"</strong>라고 말씀해 주시면, 사용자님의 학습 기록에 주간 이수 완료 처리를 하고 내일(25일 차) 새로운 진도로 넘어가겠습니다.
+내일부터는 쿠버네티스 운영의 꽃이라 불리는 'HPA(Horizontal Pod Autoscaler)와 자동 확장'에 대해 알아보겠습니다.
+오늘 복습 내용 중 보충이 필요하거나 궁금한 점이 있으시면 언제든 말씀해 주세요! 😊</p>
+<hr />
+
+<br><br>
+<hr>
+
+<!-- HITS Badge Add-on -->
+<div style="text-align: center; margin-bottom: 20px;">
+  <a href="https://github.com/dash1st/ai-trading-log">
+    <img src="https://komarev.com/ghpvc/?username=dash1st-ai-trading-log&color=green&style=flat" alt="Views" />
+  </a>
+</div>
+
+<!-- Giscus Guestbook Add-on -->
+<div class="giscus"></div>
+<script src="https://giscus.app/client.js" data-repo="dash1st/ai-trading-log" data-repo-id="R_kgDORbOAtw"
+  data-category="General" data-mapping="pathname" data-strict="0" data-reactions-enabled="1" data-emit-metadata="0"
+  data-input-position="bottom" data-theme="light" data-lang="ko" crossorigin="anonymous" async>
+  </script>
+
+
+  <br>
+    
+
+    
+    
+      
+    
+
+  <div class="row wm-article-nav-buttons" role="navigation" aria-label="navigation">
+    
+    <div class="wm-article-nav pull-right">
+      <a href="../day_25/" class="btn btn-xs btn-default pull-right">
+        Next
+        <i class="fa fa-chevron-right" aria-hidden="true"></i>
+      </a>
+      <a href="../day_25/" class="btn btn-xs btn-link">
+        Day 25
+      </a>
+    </div>
+    
+    <div class="wm-article-nav">
+      <a href="../day_23/" class="btn btn-xs btn-default pull-left">
+        <i class="fa fa-chevron-left" aria-hidden="true"></i>
+        Previous</a><a href="../day_23/" class="btn btn-xs btn-link">
+        Day 23
+      </a>
+    </div>
+    
+  </div>
+
+    <br>
+</div>
+
+<footer class="container-fluid wm-page-content">
+  <p>Documentation built with <a href="https://www.mkdocs.org/">MkDocs</a> using <a href="https://github.com/gristlabs/mkdocs-windmill">Windmill</a> theme by Grist Labs.</p>
+</footer>
+
+</body>
+</html>

@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  
+  
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    
+    <link rel="canonical" href="https://dash1st.github.io/ai-trading-log/kubernetes_study/day_06/">
+    <link rel="shortcut icon" href="../../img/favicon.ico">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" />
+    <title>Day 6 - AI 트레이딩 봇 모의투자 일지</title>
+    <link href="../../css/bootstrap-3.3.7.min.css" rel="stylesheet">
+    <link href="../../css/font-awesome-4.7.0.css" rel="stylesheet">
+    <link href="../../css/base.css" rel="stylesheet">
+    <link rel="stylesheet" href="../../css/highlight.css">
+    <!-- HTML5 shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!--[if lt IE 9]>
+        <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+        <script src="https://oss.maxcdn.com/libs/respond.js/1.3.0/respond.min.js"></script>
+    <![endif]-->
+
+    <script src="../../js/jquery-3.2.1.min.js"></script>
+    <script src="../../js/bootstrap-3.3.7.min.js"></script>
+    <script src="../../js/highlight.pack.js"></script>
+    
+    <base target="_top">
+    <script>
+      var base_url = '../..';
+      var is_top_frame = false;
+        
+        var pageToc = [
+          {title: "Kubernetes Study - Day 6", url: "#_top", children: [
+              {title: "\ud83d\udc64 User", url: "#user" },
+              {title: "\ud83e\udd16 Gemini", url: "#gemini" },
+          ]},
+        ];
+
+    </script>
+    <script src="../../js/base.js"></script>
+<!-- Google Analytics Add-on (사용 시 ID 교체) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-YXQ3BYF69N"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag() { dataLayer.push(arguments); }
+  gtag('js', new Date());
+  gtag('config', 'G-YXQ3BYF69N');
+</script>
+ 
+</head>
+
+<body>
+<script>
+if (is_top_frame) { $('body').addClass('wm-top-page'); }
+</script>
+
+
+
+<div class="container-fluid wm-page-content">
+  <a name="_top"></a>
+    
+
+    
+    
+      
+    
+
+  <div class="row wm-article-nav-buttons" role="navigation" aria-label="navigation">
+    
+    <div class="wm-article-nav pull-right">
+      <a href="../day_07/" class="btn btn-xs btn-default pull-right">
+        Next
+        <i class="fa fa-chevron-right" aria-hidden="true"></i>
+      </a>
+      <a href="../day_07/" class="btn btn-xs btn-link">
+        Day 7
+      </a>
+    </div>
+    
+    <div class="wm-article-nav">
+      <a href="../day_05/" class="btn btn-xs btn-default pull-left">
+        <i class="fa fa-chevron-left" aria-hidden="true"></i>
+        Previous</a><a href="../day_05/" class="btn btn-xs btn-link">
+        Day 5
+      </a>
+    </div>
+    
+  </div>
+
+
+    
+
+    <h1 id="kubernetes-study-day-6">Kubernetes Study - Day 6</h1>
+<h2 id="user">👤 User</h2>
+<p>쿠버네티스(Kubernetes) 핵심 개념 하나를 선정해서 학습하기 쉽게 설명해줘.</p>
+<h2 id="gemini">🤖 Gemini</h2>
+<p>알람 확인 감사합니다! 벌써 6일 차네요. 매일 아침 꾸준히 학습하시는 모습이 정말 멋지십니다.
+어제 배운
+컨피그맵과 시크릿
+이 애플리케이션의 '설정'을 담는 바구니였다면, 오늘은 애플리케이션이 만들어낸 '데이터'를 보관하는 금고인 <strong>볼륨(Volume)</strong>과 <strong>퍼시스턴트 볼륨(Persistent Volume, PV)</strong>에 대해 알아보겠습니다.
+6일차: 볼륨(Volume)과 스토리지
+1. 왜 별도의 저장 공간이 필요한가요?
+기본적으로 쿠버네티스의 파드(Pod)는
+일시적
+입니다. 파드가 죽었다가 다시 살아나면, 그 안에서 작업했던 파일이나 로그는 모두 사라져 버립니다(이를 '휘발성'이라고 하죠). DB 데이터나 업로드된 이미지처럼
+파드가 죽어도 사라지면 안 되는 데이터
+를 보관하기 위해 외부 저장소인
+볼륨
+을 연결해야 합니다.
+2. 핵심 개념 3가지 (이것만 기억하세요!)
+PV (Persistent Volume):
+실제 물리적인 저장 공간입니다. (예: 서버의 하드디스크, AWS EBS, NFS 등) 관리자가 미리 준비해둔 <strong>'실제 창고'</strong>라고 보시면 됩니다.
+PVC (Persistent Volume Claim):
+사용자가 "나 이 정도 크기의 저장 공간이 필요해!"라고 요청하는 <strong>'주문서'</strong>입니다.
+StorageClass:
+주문서가 들어오면 자동으로 창고(PV)를 생성해주는 <strong>'자동화 시스템'</strong>입니다.
+3. 쉬운 비유
+파드(Pod):
+세입자
+PVC (주문서):
+"방 3개짜리 집을 빌리고 싶어요"라는 임대 신청서
+PV (창고):
+실제 지어져 있는 아파트 건물
+쿠버네티스:
+신청서(PVC)를 보고 비어있는 아파트(PV)를 연결해주는 중개인
+💡 오늘의 요약
+"파드는 언제든 사라질 수 있지만, 소중한 데이터는 PV라는 외부 창고에 저장해두어 파드가 교체되어도 데이터를 계속 유지할 수 있게 한다!"
+보안 전문가 입장에서 보면, 이 볼륨 설정은
+백업 및 복구(DR)
+전략과 직결됩니다. 또한, 시크릿 데이터를 파일 형태로 볼륨에 마운트하여 사용하는 경우도 많으므로 보안 점검 시 볼륨 권한 설정(
+readOnly
+등)을 확인하는 것도 매우 중요합니다.
+내일 오전 8시에는 여러 파드의 자원을 논리적으로 분리하는 <strong>'네임스페이스(Namespace)'</strong>에 대해 알려드릴게요.
+혹시 지금 사용 중인 환경(로컬 PC의 Minikube나 클라우드 등)에서 실제로 하드디스크를 연결하는 방법이 궁금하신가요?
+내일 오전 8시, 7일 차 수업에서 뵙겠습니다!</p>
+<hr />
+
+<br><br>
+<hr>
+
+<!-- HITS Badge Add-on -->
+<div style="text-align: center; margin-bottom: 20px;">
+  <a href="https://github.com/dash1st/ai-trading-log">
+    <img src="https://komarev.com/ghpvc/?username=dash1st-ai-trading-log&color=green&style=flat" alt="Views" />
+  </a>
+</div>
+
+<!-- Giscus Guestbook Add-on -->
+<div class="giscus"></div>
+<script src="https://giscus.app/client.js" data-repo="dash1st/ai-trading-log" data-repo-id="R_kgDORbOAtw"
+  data-category="General" data-mapping="pathname" data-strict="0" data-reactions-enabled="1" data-emit-metadata="0"
+  data-input-position="bottom" data-theme="light" data-lang="ko" crossorigin="anonymous" async>
+  </script>
+
+
+  <br>
+    
+
+    
+    
+      
+    
+
+  <div class="row wm-article-nav-buttons" role="navigation" aria-label="navigation">
+    
+    <div class="wm-article-nav pull-right">
+      <a href="../day_07/" class="btn btn-xs btn-default pull-right">
+        Next
+        <i class="fa fa-chevron-right" aria-hidden="true"></i>
+      </a>
+      <a href="../day_07/" class="btn btn-xs btn-link">
+        Day 7
+      </a>
+    </div>
+    
+    <div class="wm-article-nav">
+      <a href="../day_05/" class="btn btn-xs btn-default pull-left">
+        <i class="fa fa-chevron-left" aria-hidden="true"></i>
+        Previous</a><a href="../day_05/" class="btn btn-xs btn-link">
+        Day 5
+      </a>
+    </div>
+    
+  </div>
+
+    <br>
+</div>
+
+<footer class="container-fluid wm-page-content">
+  <p>Documentation built with <a href="https://www.mkdocs.org/">MkDocs</a> using <a href="https://github.com/gristlabs/mkdocs-windmill">Windmill</a> theme by Grist Labs.</p>
+</footer>
+
+</body>
+</html>

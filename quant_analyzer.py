@@ -1,6 +1,7 @@
 import pandas as pd
 import ta
 from datetime import datetime
+import pytz
 import FinanceDataReader as fdr
 
 # 전역 종목명 매핑 캐시 (초기 로딩 지연 방지)
@@ -63,9 +64,12 @@ class QuantAnalyzer:
         # ---------------------------------------------------------
         # [전략 1: 로스 카메론 (Ross Cameron) 스윙 모멘텀]
         # ---------------------------------------------------------
-        df['Ross_Oversold'] = df['RSI'] < 30
+        # 기존: df['Ross_Oversold'] = df['RSI'] < 30
+        df['Ross_Oversold'] = df['RSI'] < 40  # 과매도 포착 허들 완화 
         df['Ross_Overbought'] = df['RSI'] > 70
-        df['BB_Touch_Low'] = df['Low'] <= df['BB_Low']
+        
+        # 기존: df['BB_Touch_Low'] = df['Low'] <= df['BB_Low']
+        df['BB_Touch_Low'] = df['Low'] <= (df['BB_Low'] * 1.02) # 바닥 뚫기 직전, 근처(2%)만 와도 터치로 인정 (공격적 타점)
         df['BB_Touch_High'] = df['High'] >= df['BB_High']
         
         # MACD 교차 신호 (Golden Cross / Dead Cross)
@@ -102,8 +106,9 @@ class QuantAnalyzer:
         score = 0
         reasons = []
         
-        # 1. RSI 반등 확인 (떨어지는 칼날 회피, 바닥 딛고 상승 전환 포착)
-        if prev['RSI'] <= 35 and latest['RSI'] > prev['RSI']:
+        # 1. RSI 반등 확인 (기존 엄격한 조건 대신, 매수 진입 시점을 일찍 낚아채도록 기준 완화)
+        # 기존 주석: if prev['RSI'] <= 35 and latest['RSI'] > prev['RSI']:
+        if prev['RSI'] <= 45 and latest['RSI'] > prev['RSI']:
             score += 40
             reasons.append(f"RSI 바닥 반등({latest['RSI']:.1f})")
             
@@ -128,15 +133,30 @@ class QuantAnalyzer:
         should_buy = False
         grade = ""
         
-        if score >= 80:
+        # [기존 로직 보존용 주석: 총점 기반 비중 산출 (최대 3배수 베팅)]
+        # if score >= 80:
+        #     should_buy = True
+        #     weight = 3.0
+        #     grade = "S급(비중 3배)"
+        # elif score >= 50:
+        #     should_buy = True
+        #     weight = 2.0
+        #     grade = "A급(비중 2배)"
+        # elif score >= 40:
+        #     should_buy = True
+        #     weight = 1.0
+        #     grade = "B급(비중 1배)"
+            
+        # [신규 공격적 세팅 설정] 최저 커트라인 강하 (20점 돌파 시 매수), 비중 강화
+        if score >= 60:
             should_buy = True
             weight = 3.0
             grade = "S급(비중 3배)"
-        elif score >= 50:
+        elif score >= 40:
             should_buy = True
             weight = 2.0
             grade = "A급(비중 2배)"
-        elif score >= 40:
+        elif score >= 20:
             should_buy = True
             weight = 1.0
             grade = "B급(비중 1배)"
@@ -171,7 +191,7 @@ class QuantAnalyzer:
         except:
             date_str = "최근 영업일"
             
-        current_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        current_time = datetime.now(pytz.timezone('Asia/Seoul')).strftime('%Y-%m-%d %H:%M:%S')
         
         # 종목명 찾기 (없으면 그냥 코드)
         stock_name = STOCK_NAMES.get(ticker, ticker)

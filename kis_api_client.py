@@ -2,6 +2,7 @@ import os
 import requests
 import json
 from datetime import datetime
+import pytz
 from dotenv import load_dotenv
 import pandas as pd
 import yfinance as yf
@@ -17,6 +18,7 @@ class KisApiClient:
         self.account_no = os.environ.get("KIS_ACCOUNT_NO")
         
         self.access_token = None
+        self.token_issued_at = None
         self.is_ready = False
         
         # 키가 모두 입력되었는지 확인
@@ -40,6 +42,8 @@ class KisApiClient:
             res = requests.post(url, headers=headers, data=json.dumps(body))
             if res.status_code == 200:
                 self.access_token = res.json().get("access_token")
+                kr_tz = pytz.timezone('Asia/Seoul')
+                self.token_issued_at = datetime.now(kr_tz)
                 print(f"[KIS_API] 🔑 접근 시간 연장/토큰 발급 완료")
             else:
                 print(f"[KIS_API] ❌ 토큰 발급 실패: {res.text}")
@@ -57,11 +61,28 @@ class KisApiClient:
         df = df[['Open', 'High', 'Low', 'Close', 'Volume']].dropna()
         return df
 
+    def _check_token(self):
+        """토큰 만료(24시간) 전 자동 갱신"""
+        if not self.is_ready:
+            return
+        if self.access_token is None or self.token_issued_at is None:
+            self.auth()
+            return
+            
+        # 23시간이 지났으면 토큰 재발급
+        kr_tz = pytz.timezone('Asia/Seoul')
+        elapsed_seconds = (datetime.now(kr_tz) - self.token_issued_at).total_seconds()
+        if elapsed_seconds > 23 * 3600:
+            print("[KIS_API] 🔄 토큰 발급 후 23시간 경과하여 자동 갱신을 시도합니다.")
+            self.auth()
+
     def fetch_ohlcv(self, stock_code, period_type="D"):
         """
         KIS API: 국내주식 기간별시세(일/주/월/년) 조회
         period_type: "D"(일봉), "W"(주봉), "M"(월봉)
         """
+        self._check_token()
+
         if not self.is_ready or not self.access_token:
             print("[KIS_API] ❌ 인증 토큰이 없어 데이터를 조회할 수 없습니다.")
             return None
@@ -119,6 +140,8 @@ class KisApiClient:
     
     def fetch_balance(self):
         """계좌 잔고 조회"""
+        self._check_token()
+
         if not self.is_ready or not self.access_token:
             return "❌ 인증 토큰이 없어 잔고를 조회할 수 없습니다."
             
@@ -171,9 +194,71 @@ class KisApiClient:
                 return f"🔴 통신 오류: {res.status_code}"
         except Exception as e:
             return f"🔴 시스템 오류: {e}"
+
+    def fetch_balance_dict(self):
+        """계좌 잔고 조회 (raw data dict 반환)"""
+        self._check_token()
+
+        if not self.is_ready or not self.access_token:
+            return {"error": "인증 토큰이 없어 잔고를 조회할 수 없습니다."}
+            
+        url = f"{self.domain}/uapi/domestic-stock/v1/trading/inquire-balance"
+        is_mock = "vts" in self.domain
+        tr_id = "VTTC8434R" if is_mock else "TTTC8434R"
+        
+        headers = {
+            "content-type": "application/json; charset=utf-8",
+            "authorization": f"Bearer {self.access_token}",
+            "appkey": self.app_key,
+            "appsecret": self.app_secret,
+            "tr_id": tr_id,
+        }
+        
+        account_parts = self.account_no.split("-") if "-" in self.account_no else [self.account_no, "01"]
+        params = {
+            "CANO": account_parts[0],
+            "ACNT_PRDT_CD": account_parts[1],
+            "AFHR_FLPR_YN": "N",
+            "OFL_YN": "",
+            "INQR_DVSN": "02",
+            "UNPR_DVSN": "01",
+            "FUND_STTL_ICLD_YN": "N",
+            "FNCG_AMT_AUTO_RDPT_YN": "N",
+            "PRCS_DVSN": "00",
+            "CTX_AREA_FK100": "",
+            "CTX_AREA_NK100": ""
+        }
+        
+        try:
+            res = requests.get(url, headers=headers, params=params)
+            if res.status_code == 200:
+                data = res.json()
+                if data["rt_cd"] == "0":
+                    out2 = data.get("output2", [{}])[0]
+                    # 예수금
+                    dnca = int(out2.get("dnca_tot_amt", 0))    
+                    # 총 평가금액 (API 제공값, 시차 있을 수 있음)
+                    tot = int(out2.get("tot_evlu_amt", 0))     
+                    # 순자산
+                    net = int(out2.get("nass_amt", 0))         
+                    
+                    return {
+                        "cash": dnca,
+                        "total_evaluation": tot,
+                        "net_asset": net,
+                        "account_no": self.account_no
+                    }
+                else:
+                    return {"error": f"서버 거절: {data.get('msg1')}"}
+            else:
+                return {"error": f"통신 오류: {res.status_code}"}
+        except Exception as e:
+            return {"error": f"시스템 오류: {e}"}
             
     def _execute_order(self, stock_code, qty, price, order_type="BUY"):
         """ 내부 공통 주문 모듈 (매수/매도) """
+        self._check_token()
+
         if not self.is_ready or not self.access_token:
             return "[오류] 인증 토큰이 없습니다."
         

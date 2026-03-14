@@ -55,7 +55,8 @@ class TelegramAgent:
     async def start_cmd(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """봇 시작 메시지"""
         from datetime import datetime
-        now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        import pytz
+        now = datetime.now(pytz.timezone('Asia/Seoul')).strftime("%Y-%m-%d %H:%M:%S")
         print(f"[{now}] [Telegram] 📥 수신: /start (사용자명: {update.effective_user.first_name})")
         msg = "🤖 AI 트레이딩 봇 연결 성공!\n명령어:\n/help: 전체 사용법 및 도움말 확인\n/status [종목코드]: 추세 분석\n/balance: теку 잔고 조회\n/buy [종목]: 매수\n/sell [종목]: 매도"
         await update.message.reply_text(msg)
@@ -63,7 +64,8 @@ class TelegramAgent:
     async def help_cmd(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """도움말 출력"""
         from datetime import datetime
-        now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        import pytz
+        now = datetime.now(pytz.timezone('Asia/Seoul')).strftime("%Y-%m-%d %H:%M:%S")
         print(f"[{now}] [Telegram] 📥 수신: /help")
         msg = (
             "💡 **AI 트레이딩 봇 사용법** 💡\n\n"
@@ -81,16 +83,20 @@ class TelegramAgent:
     async def balance_cmd(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """잔고 조회 프로세스"""
         from datetime import datetime
-        now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        import pytz
+        now = datetime.now(pytz.timezone('Asia/Seoul')).strftime("%Y-%m-%d %H:%M:%S")
         print(f"[{now}] [Telegram] 📥 수신: /balance (잔고 조회 요청)")
-        await update.message.reply_text("🔍 계좌 잔고를 조회 중입니다...")
-        res_msg = self.client.fetch_balance()
+        await update.message.reply_text("🔍 정밀 계좌 잔고를 계산 중입니다...")
+        
+        # 새로 만든 상세 포트폴리오 리포트 포맷 재사용
+        res_msg = await self._generate_portfolio_report(is_hourly=False)
         await update.message.reply_text(res_msg, parse_mode='Markdown')
 
     async def status_cmd(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """상태 조회 프로세스"""
         from datetime import datetime
-        now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        import pytz
+        now = datetime.now(pytz.timezone('Asia/Seoul')).strftime("%Y-%m-%d %H:%M:%S")
         cmd_text = " ".join(context.args) if context.args else ""
         print(f"[{now}] [Telegram] 📥 수신: /status {cmd_text}")
         
@@ -119,7 +125,8 @@ class TelegramAgent:
     async def buy_cmd(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """매수 주문 접수"""
         from datetime import datetime
-        now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        import pytz
+        now = datetime.now(pytz.timezone('Asia/Seoul')).strftime("%Y-%m-%d %H:%M:%S")
         cmd_text = " ".join(context.args) if context.args else ""
         print(f"[{now}] [Telegram] 📥 수신: /buy {cmd_text}")
         
@@ -149,7 +156,8 @@ class TelegramAgent:
     async def sell_cmd(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """매도 주문 접수"""
         from datetime import datetime
-        now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        import pytz
+        now = datetime.now(pytz.timezone('Asia/Seoul')).strftime("%Y-%m-%d %H:%M:%S")
         cmd_text = " ".join(context.args) if context.args else ""
         print(f"[{now}] [Telegram] 📥 수신: /sell {cmd_text}")
         
@@ -197,7 +205,8 @@ class TelegramAgent:
     async def scheduled_hourly_health_check(self, context: ContextTypes.DEFAULT_TYPE):
         """매 시 정각 실행: CPU/RAM 현황 및 KIS 계좌 자산 현황을 Health Check 파일에 기록"""
         from datetime import datetime
-        now = datetime.now()
+        import pytz
+        now = datetime.now(pytz.timezone('Asia/Seoul'))
         
         # 시스템 메트릭 조회
         import psutil
@@ -207,7 +216,11 @@ class TelegramAgent:
         
         # 계좌 총 자산 조회 (API 에러 시 0 처리)
         try:
-            total_eval = self.client.get_balance()
+            balance_data = self.client.fetch_balance_dict()
+            if "error" not in balance_data:
+                total_eval = balance_data.get("total_evaluation", 0) + balance_data.get("cash", 0)
+            else:
+                total_eval = 0
         except:
             total_eval = 0
             
@@ -221,6 +234,84 @@ class TelegramAgent:
         except Exception as e:
             print(f"[System] ⚠️ Health check 작성 실패: {e}")
 
+    async def _generate_portfolio_report(self, is_hourly: bool = False):
+        """계좌 잔고와 봇 포지션을 합친 상세 리포트 텍스트 생성기"""
+        from datetime import datetime
+        import pytz
+        now = datetime.now(pytz.timezone('Asia/Seoul')).strftime("%H:%M")
+        
+        # 1. 원금 및 KIS 잔고 데이터
+        STARTING_CAPITAL = 10_000_000
+        balance_data = self.client.fetch_balance_dict()
+        
+        if "error" in balance_data:
+            return f"⚠️ 계좌 잔고를 불러오지 못했습니다: {balance_data['error']}"
+            
+        available_cash = balance_data.get("cash", 0)
+        
+        # 2. 봇 매매 보유 종목 정보 구성
+        total_stock_value = 0
+        total_stock_profit = 0
+        positions_msg = ""
+        
+        if not self.auto_trader or not self.auto_trader.positions:
+            positions_msg = "📭 **현재 봇이 보유 중인 주식이 없습니다.**"
+        else:
+            lines = ["**[현재 보유 주식 상세]**"]
+            for ticker, pos in self.auto_trader.positions.items():
+                from quant_analyzer import STOCK_NAMES
+                stock_name = STOCK_NAMES.get(ticker, ticker)
+                
+                buy_price = pos["buy_price"]
+                qty = pos["qty"]
+                current_price = pos.get("current_price", buy_price)
+                
+                fee = 0.0003
+                # 개별 종목 매수 가치
+                buy_value = buy_price * qty
+                # 개별 종목 현재 가치 (수수료 차감 후)
+                current_value = current_price * qty * (1 - fee * 2)
+                # 평가 손익 (금액)
+                unrealized_pnl = current_value - buy_value
+                # 대략적 수익률
+                profit_rate = (unrealized_pnl / buy_value) * 100.0 if buy_value > 0 else 0
+                
+                total_stock_value += current_value
+                total_stock_profit += unrealized_pnl
+                
+                status_icon = "🔴" if unrealized_pnl < 0 else "🟢"
+                lines.append(f"{status_icon} **{stock_name}** ({ticker}) : {qty}주\n"
+                             f"   └ 매수가: {buy_price:,.0f}원 | 현재가: {current_price:,.0f}원\n"
+                             f"   └ 보유 가치: **{current_value:,.0f}원** (수익: {unrealized_pnl:+,.0f}원)")
+            positions_msg = "\n".join(lines)
+            
+        # 3. 총 자산 계산
+        total_evaluated_asset = available_cash + total_stock_value
+        total_overall_pnl = total_evaluated_asset - STARTING_CAPITAL
+        total_overall_pnl_rate = (total_overall_pnl / STARTING_CAPITAL) * 100.0
+        
+        header = f"⏰ **[정각 {now} 자산 현황 보고]** ⏰" if is_hourly else f"🔍 **[현재 계좌 자산 요약]**"
+        
+        final_msg = f"{header}\n\n" \
+                    f"💰 **초기 투자 원금**: {STARTING_CAPITAL:,.0f} 원\n" \
+                    f"💵 **현재 주문 가능 현금**: {available_cash:,.0f} 원\n\n" \
+                    f"{positions_msg}\n\n" \
+                    f"===============================\n" \
+                    f"📊 **총 주식 평가금액**: {total_stock_value:,.0f} 원\n" \
+                    f"💎 **현재 총 자산** (현금+주식): **{total_evaluated_asset:,.0f} 원**\n" \
+                    f"📈 **원금 대비 총 손익**: **{total_overall_pnl:+,.0f} 원 ({total_overall_pnl_rate:+.2f}%)**"
+                    
+        return final_msg
+
+    async def scheduled_hourly_portfolio_report(self, context: ContextTypes.DEFAULT_TYPE):
+        """매 시 정각 실행: 고객 계좌 요약 및 봇 현재 보유 종목 PnL 리포트 발송"""
+        from auto_trader import AutoTrader
+        if not AutoTrader.is_market_open():
+            return  # 장외 시간에는 알림을 끄고 조용히 대기 (주말, 야간 스팸 방지)
+            
+        report_msg = await self._generate_portfolio_report(is_hourly=True)
+        await context.bot.send_message(chat_id=self.chat_id, text=report_msg, parse_mode='Markdown')
+
     async def scheduled_report(self, context: ContextTypes.DEFAULT_TYPE):
         """스케줄러에 의해 5분마다 주기로 실행될 관심 종목 타점 스캔 및 자동 매매 대기"""
         from auto_trader import AutoTrader
@@ -228,7 +319,8 @@ class TelegramAgent:
             return  # 장외 시간에는 동작하지 않음
             
         from datetime import datetime
-        now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        import pytz
+        now = datetime.now(pytz.timezone('Asia/Seoul')).strftime("%Y-%m-%d %H:%M:%S")
         print(f"[{now}] [Telegram] ⏰ 5분 주기 스케줄러: 백그라운드 타점 스캔 및 포트폴리오 현황 보고 중...")
         
         # quant_analyzer.py 에 정의된 대표 종목 사전(STOCK_NAMES)을 참조하여 관심 종목 풀 설정
@@ -252,6 +344,10 @@ class TelegramAgent:
                         context.application.create_task(
                             self.auto_trader.execute_auto_buy(ticker, current_price, bot_reason, weight)
                         )
+            
+            # KIS API 호출 제한(Rate Limit) 방지 & 텔레그램 스레드 양보
+            import asyncio
+            await asyncio.sleep(0.1)
         
         # 기존 관심종목 브리핑 발송은 삭제하고, 현재 보유 중인 알짜 포지션 수익 현황만 보고
         if self.auto_trader is not None:
@@ -260,7 +356,8 @@ class TelegramAgent:
     async def scheduled_opening_bell(self, context: ContextTypes.DEFAULT_TYPE):
         """매일 아침 08:58 에 실행되는 장 시작 알림"""
         from datetime import datetime
-        now = datetime.now()
+        import pytz
+        now = datetime.now(pytz.timezone('Asia/Seoul'))
         if now.weekday() >= 5:
             await context.bot.send_message(chat_id=self.chat_id, text="☕️ **[휴장일 안내]**\n오늘은 주말/휴장일입니다. 봇은 오늘 하루 매매를 쉬고 대기합니다. 편안한 주말 보내세요!")
         else:
@@ -273,7 +370,8 @@ class TelegramAgent:
     async def scheduled_closing_bell(self, context: ContextTypes.DEFAULT_TYPE):
         """매일 오후 15:35 에 실행되는 장 마감 일간 리포트"""
         from datetime import datetime
-        now = datetime.now()
+        import pytz
+        now = datetime.now(pytz.timezone('Asia/Seoul'))
         if now.weekday() >= 5:
             return # 주말은 마감 보고 생략
             
@@ -340,8 +438,11 @@ class TelegramAgent:
         t_weekly = datetime.time(hour=15, minute=40, tzinfo=kr_tz)
         app.job_queue.run_daily(self.scheduled_weekly_report, time=t_weekly, days=(4,))
         
-        # 1시간 주기로 정각마다 생존 보고 (분=0 으로 설정하여 매시 정각 구동)
+        # 1시간 주기로 정각마다 생존 보고 (분=0 으로 설정하여 매시 정각 구동) - 기존 IT 모니터링
         app.job_queue.run_repeating(self.scheduled_hourly_health_check, interval=3600, first=0)
+        
+        # 1시간 주기로 자산 및 홀딩 현황 보고 (정각 구동)
+        app.job_queue.run_repeating(self.scheduled_hourly_portfolio_report, interval=3600, first=0)
         
         # 명령어 핸들러 등록 (devlog 추가)
         app.add_handler(CommandHandler("devlog", self.devlog_cmd))

@@ -2,6 +2,7 @@ import os
 import time
 import asyncio
 from datetime import datetime
+import pytz
 from dotenv import load_dotenv
 from telegram_agent import TelegramAgent
 from kis_api_client import KisApiClient
@@ -36,7 +37,8 @@ class AutoTrader:
     @classmethod
     def is_market_open(cls) -> bool:
         """현재 시간이 한국 주식시장 장중(평일 09:00 ~ 15:30)인지 여부 반환"""
-        now = datetime.now()
+        kr_tz = pytz.timezone('Asia/Seoul')
+        now = datetime.now(kr_tz)
         # 주말(토=5, 일=6)이면 False
         if now.weekday() >= 5:
             return False
@@ -50,7 +52,8 @@ class AutoTrader:
         return open_minutes <= current_minutes < close_minutes
 
     def log(self, msgs: str):
-        now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        kr_tz = pytz.timezone('Asia/Seoul')
+        now = datetime.now(kr_tz).strftime("%Y-%m-%d %H:%M:%S")
         print(f"[{now}] [AutoTrader] {msgs}")
 
     async def execute_auto_buy(self, ticker: str, current_price: float, reason: str, weight: float = 1.0):
@@ -74,8 +77,13 @@ class AutoTrader:
         # KIS API로 매수 주문 전송
         kis_res = self.kis_client.execute_buy(ticker, str(qty), str(int(current_price)))
         
-        # 주문 성공 간주 처리 (실제로는 KIS의 체결 내역을 polling 해야 하나 임시로 성공 처리)
-        now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        if "주문 성공" not in kis_res:
+            self.log(f"❌ [매수 실패] {ticker} - {kis_res}")
+            return
+            
+        # 주문 성공 처리
+        kr_tz = pytz.timezone('Asia/Seoul')
+        now_str = datetime.now(kr_tz).strftime("%Y-%m-%d %H:%M:%S")
         self.positions[ticker] = {
             "buy_price": current_price,
             "qty": qty,

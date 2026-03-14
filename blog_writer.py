@@ -1,6 +1,7 @@
 import os
 import subprocess
 from datetime import datetime
+import pytz
 import asyncio
 
 class BlogWriter:
@@ -17,14 +18,16 @@ class BlogWriter:
 
     def get_today_filepath(self):
         """오늘 연월(YYYY-MM) 기준으로 파일 경로 반환 (이번 달 일지 파일 하나에 계속 누적)"""
-        today = datetime.now()
+        kr_tz = pytz.timezone('Asia/Seoul')
+        today = datetime.now(kr_tz)
         filename = f"{today.strftime('%Y-%m')}.md"
         return os.path.join(self.logs_dir, filename)
 
     def write_trade_log(self, ticker: str, position: str, buy_price: float, sell_price: float, return_rate: float, reason: str):
         """매수/매도 등 단위 거래 발생 시 표에 한 줄 기록 추가"""
         filepath = self.get_today_filepath()
-        today_date = datetime.now().strftime('%m/%d %H:%M')
+        kr_tz = pytz.timezone('Asia/Seoul')
+        today_date = datetime.now(kr_tz).strftime('%m/%d %H:%M')
         
         # 종목명(한국어) 매핑
         try:
@@ -64,7 +67,8 @@ class BlogWriter:
     def write_daily_closing_summary(self, summary_text: str):
         """장 마감 시 일간 종합 브리핑 텍스트를 문서 하단에 추가로 기록"""
         filepath = self.get_today_filepath()
-        today_date = datetime.now().strftime('%Y-%m-%d')
+        kr_tz = pytz.timezone('Asia/Seoul')
+        today_date = datetime.now(kr_tz).strftime('%Y-%m-%d')
         
         if not os.path.exists(filepath):
             self._init_monthly_file(filepath)
@@ -78,7 +82,8 @@ class BlogWriter:
 
     def _init_monthly_file(self, filepath: str):
         """해당 월의 첫 거래일 경우 마크다운 뼈대 및 테이블 헤더 작성"""
-        month_str = datetime.now().strftime('%Y년 %m월')
+        kr_tz = pytz.timezone('Asia/Seoul')
+        month_str = datetime.now(kr_tz).strftime('%Y년 %m월')
         header = f"# 📅 {month_str} 매매 일지\n\n"
         header += "이 문서는 AI 트레이딩 봇이 자동으로 실시간 기록하는 이번 달 매매 및 분석 데이터입니다.\n\n"
         header += "## 📈 상세 거래 내역\n\n"
@@ -102,7 +107,8 @@ class BlogWriter:
         os.makedirs(system_dir, exist_ok=True)
         filepath = os.path.join(system_dir, 'developer_log.md')
         
-        today_date = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        kr_tz = pytz.timezone('Asia/Seoul')
+        today_date = datetime.now(kr_tz).strftime('%Y-%m-%d %H:%M:%S')
         new_entry = f"### 🕒 {today_date}\n- {message}\n\n---\n\n"
         
         if not os.path.exists(filepath):
@@ -129,7 +135,8 @@ class BlogWriter:
         os.makedirs(system_dir, exist_ok=True)
         filepath = os.path.join(system_dir, 'health_check.md')
         
-        today_date = datetime.now().strftime('%Y-%m-%d %H:%M')
+        kr_tz = pytz.timezone('Asia/Seoul')
+        today_date = datetime.now(kr_tz).strftime('%Y-%m-%d %H:%M')
         log_line = f"| {today_date} | ✅ 정상 구동중 | {cpu}% | {memory}% | {total_asset:,.0f} 원 |\n"
         
         if not os.path.exists(filepath):

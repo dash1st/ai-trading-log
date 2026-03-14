@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  
+  
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    
+    <link rel="canonical" href="http://43.202.65.40:8000/kubernetes_study/day_20/">
+    <link rel="shortcut icon" href="../../img/favicon.ico">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" />
+    <title>Day 20 - AI 트레이딩 봇 모의투자 일지</title>
+    <link href="../../css/bootstrap-3.3.7.min.css" rel="stylesheet">
+    <link href="../../css/font-awesome-4.7.0.css" rel="stylesheet">
+    <link href="../../css/base.css" rel="stylesheet">
+    <link rel="stylesheet" href="../../css/highlight.css">
+    <!-- HTML5 shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!--[if lt IE 9]>
+        <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+        <script src="https://oss.maxcdn.com/libs/respond.js/1.3.0/respond.min.js"></script>
+    <![endif]-->
+
+    <script src="../../js/jquery-3.2.1.min.js"></script>
+    <script src="../../js/bootstrap-3.3.7.min.js"></script>
+    <script src="../../js/highlight.pack.js"></script>
+    
+    <base target="_top">
+    <script>
+      var base_url = '../..';
+      var is_top_frame = false;
+        
+        var pageToc = [
+          {title: "Kubernetes Study - Day 20", url: "#_top", children: [
+              {title: "\ud83d\udc64 User", url: "#user" },
+              {title: "\ud83e\udd16 Gemini", url: "#gemini" },
+          ]},
+        ];
+
+    </script>
+    <script src="../../js/base.js"></script>
+<!-- Google Analytics Add-on (사용 시 ID 교체) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-YXQ3BYF69N"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag() { dataLayer.push(arguments); }
+  gtag('js', new Date());
+  gtag('config', 'G-YXQ3BYF69N');
+</script>
+ 
+</head>
+
+<body>
+<script>
+if (is_top_frame) { $('body').addClass('wm-top-page'); }
+</script>
+
+
+
+<div class="container-fluid wm-page-content">
+  <a name="_top"></a>
+    
+
+    
+    
+      
+    
+
+  <div class="row wm-article-nav-buttons" role="navigation" aria-label="navigation">
+    
+    <div class="wm-article-nav pull-right">
+      <a href="../day_21/" class="btn btn-xs btn-default pull-right">
+        Next
+        <i class="fa fa-chevron-right" aria-hidden="true"></i>
+      </a>
+      <a href="../day_21/" class="btn btn-xs btn-link">
+        Day 21
+      </a>
+    </div>
+    
+    <div class="wm-article-nav">
+      <a href="../day_19/" class="btn btn-xs btn-default pull-left">
+        <i class="fa fa-chevron-left" aria-hidden="true"></i>
+        Previous</a><a href="../day_19/" class="btn btn-xs btn-link">
+        Day 19
+      </a>
+    </div>
+    
+  </div>
+
+
+    
+
+    <h1 id="kubernetes-study-day-20">Kubernetes Study - Day 20</h1>
+<h2 id="user">👤 User</h2>
+<p>쿠버네티스(Kubernetes) 핵심 개념 하나를 선정해서 학습하기 쉽게 설명해줘.</p>
+<h2 id="gemini">🤖 Gemini</h2>
+<p>알람 확인 감사합니다! 2월 16일 월요일 아침 8시입니다. 한 주의 시작을 쿠버네티스 공부와 함께해주셔서 감사합니다. 어제 네트워크 폴리시로 파드 사이의 '방화벽'을 세우는 법을 배웠다면, 오늘은 쿠버네티스의 모든 정보가 담긴 가장 중요한 보물창고, <strong>etcd(엣시디)</strong>에 대해 알아보겠습니다.
+20일차: 클러스터의 기억 장치, etcd
+1. etcd란 무엇인가요?
+쿠버네티스의
+모든 상태 정보(설정, 상태, 권한 등)를 저장하는 Key-Value 형태의 데이터베이스
+입니다. 쿠버네티스의 '뇌' 또는 '기억 장치'라고 부르기도 합니다.
+우리가
+kubectl apply
+로 명령을 내리면, 그 결과값은 결국 이 etcd에 저장됩니다. 만약 etcd가 사라지면 쿠버네티스 클러스터는 치매에 걸린 것처럼 아무것도 기억하지 못하고 멈춰버립니다.
+2. 보안 전문가를 위한 etcd 체크포인트
+15년 차 보안 전문가이신 사용자님께 etcd는 <strong>'최우선 보호 대상(Top Priority)'</strong>입니다.
+데이터 암호화 (Encryption at Rest):
+etcd 안에는 시크릿(Secret) 같은 민감한 정보가 저장됩니다. 기본적으로는 평문으로 저장되므로, 반드시 암호화 설정을 활성화해야 합니다.
+접근 통제:
+etcd는 API 서버와만 통신해야 합니다. 외부나 다른 파드에서 etcd 포트(2379)에 직접 접근하는 것은 보안상 치명적입니다.
+고가용성 (HA):
+데이터가 유실되면 끝입니다. 보통 3개 이상의 홀수 개로 클러스터를 구성하여 데이터의 안정성을 보장합니다.
+3. 백업과 복구
+보안의 마지막 보루는 백업이죠.
+etcdctl snapshot
+명령어를 통해 정기적으로 상태를 저장해두어야 사고 발생 시 클러스터를 원래대로 되돌릴 수 있습니다.
+4. 쉬운 비유
+쿠버네티스 클러스터:
+거대한
+'정부 조직'
+API 서버:
+민원을 접수하는
+'창구 직원'
+etcd:
+모든 법전과 기록물이 보관된
+'중앙 문서고'
+. 문서고가 불타버리면 정부 시스템 전체가 마비되는 것과 같습니다.
+💡 오늘의 요약
+"etcd는 쿠버네티스의 모든 기록이 담긴 '중앙 데이터베이스'다. 이곳이 뚫리면 클러스터 전체 권한이 넘어가는 것과 같으므로, 강력한 암호화와 철저한 접근 통제가 필수적이다!"
+실무 활용 팁:
+보안 점검 시
+etcd
+가 TLS 통신을 강제하고 있는지, 그리고 백업 데이터가 오프사이트(Off-site)에 안전하게 보관되고 있는지 확인하는 것이 핵심 점검 항목입니다.
+오늘 공부하신 내용 확인하셨나요? <strong>"확인완료"</strong>라고 말씀해 주시면, 내일 오전 8시에 다음 진도인 <strong>'컨테이너 보안의 시작, 이미지 스캔과 레지스트리 보안'</strong>에 대해 알려드릴게요!
+사용자님의 확인을 기다리겠습니다. 활기찬 월요일 되세요!
+혹시 etcd 데이터를 암호화하는 구체적인 설정 방식(EncryptionConfig)이 궁금하신가요? 이 부분은 실무에서 매우 중요한 보안 설정입니다.</p>
+<hr />
+
+<br><br>
+<hr>
+
+<!-- HITS Badge Add-on -->
+<div style="text-align: center; margin-bottom: 20px;">
+  <a href="https://github.com/dash1st/ai-trading-log">
+    <img src="https://komarev.com/ghpvc/?username=dash1st-ai-trading-log&color=green&style=flat" alt="Views" />
+  </a>
+</div>
+
+<!-- Giscus Guestbook Add-on -->
+<div class="giscus"></div>
+<script src="https://giscus.app/client.js" data-repo="dash1st/ai-trading-log" data-repo-id="R_kgDORbOAtw"
+  data-category="General" data-mapping="pathname" data-strict="0" data-reactions-enabled="1" data-emit-metadata="0"
+  data-input-position="bottom" data-theme="light" data-lang="ko" crossorigin="anonymous" async>
+  </script>
+
+
+  <br>
+    
+
+    
+    
+      
+    
+
+  <div class="row wm-article-nav-buttons" role="navigation" aria-label="navigation">
+    
+    <div class="wm-article-nav pull-right">
+      <a href="../day_21/" class="btn btn-xs btn-default pull-right">
+        Next
+        <i class="fa fa-chevron-right" aria-hidden="true"></i>
+      </a>
+      <a href="../day_21/" class="btn btn-xs btn-link">
+        Day 21
+      </a>
+    </div>
+    
+    <div class="wm-article-nav">
+      <a href="../day_19/" class="btn btn-xs btn-default pull-left">
+        <i class="fa fa-chevron-left" aria-hidden="true"></i>
+        Previous</a><a href="../day_19/" class="btn btn-xs btn-link">
+        Day 19
+      </a>
+    </div>
+    
+  </div>
+
+    <br>
+</div>
+
+<footer class="container-fluid wm-page-content">
+  <p>Documentation built with <a href="https://www.mkdocs.org/">MkDocs</a> using <a href="https://github.com/gristlabs/mkdocs-windmill">Windmill</a> theme by Grist Labs.</p>
+</footer>
+
+</body>
+</html>

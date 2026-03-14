@@ -8,7 +8,7 @@ class TelegramAgent:
         load_dotenv()
         self.token = os.environ.get("TELEGRAM_BOT_TOKEN")
         self.chat_id = os.environ.get("TELEGRAM_CHAT_ID")
-        self.client = client
+        self.kis_client = client
         self.analyzer = analyzer
         self.auto_trader = auto_trader
         
@@ -112,7 +112,7 @@ class TelegramAgent:
             
         await update.message.reply_text(f"🔍 '{ticker}' 분석 리포트 생성 중...")
         
-        df = self.client.fetch_ohlcv(ticker, period_type="D")
+        df = self.kis_client.fetch_ohlcv(ticker, period_type="D")
         if df is None or df.empty:
             await update.message.reply_text("❌ 데이터를 가져오지 못했습니다.")
             return
@@ -150,7 +150,7 @@ class TelegramAgent:
             
         await update.message.reply_text(f"💸 매수 주문 실행 중... ({ticker} {qty}주, {price}원)")
         
-        res_msg = self.client.execute_buy(ticker, qty, price)
+        res_msg = self.kis_client.execute_buy(ticker, qty, price)
         await update.message.reply_text(res_msg)
 
     async def sell_cmd(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -181,7 +181,7 @@ class TelegramAgent:
             
         await update.message.reply_text(f"💸 매도 주문 실행 중... ({ticker} {qty}주, {price}원)")
         
-        res_msg = self.client.execute_sell(ticker, qty, price)
+        res_msg = self.kis_client.execute_sell(ticker, qty, price)
         await update.message.reply_text(res_msg)
 
     async def devlog_cmd(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -216,7 +216,7 @@ class TelegramAgent:
         
         # 계좌 총 자산 조회 (API 에러 시 0 처리)
         try:
-            balance_data = self.client.fetch_balance_dict()
+            balance_data = self.kis_client.fetch_balance_dict()
             if "error" not in balance_data:
                 total_eval = balance_data.get("total_evaluation", 0) + balance_data.get("cash", 0)
             else:
@@ -242,7 +242,7 @@ class TelegramAgent:
         
         # 1. 원금 및 KIS 잔고 데이터
         STARTING_CAPITAL = 10_000_000
-        balance_data = self.client.fetch_balance_dict()
+        balance_data = self.kis_client.fetch_balance_dict()
         
         if "error" in balance_data:
             return f"⚠️ 계좌 잔고를 불러오지 못했습니다: {balance_data['error']}"
@@ -328,7 +328,7 @@ class TelegramAgent:
         watch_list = list(STOCK_NAMES.keys())
         
         for ticker in watch_list:
-            df = self.client.fetch_ohlcv(ticker, period_type="D")
+            df = self.kis_client.fetch_ohlcv(ticker, period_type="D")
             if df is not None and not df.empty:
                 analyzed_df = self.analyzer.calculate_indicators(df)
                 latest = analyzed_df.iloc[-1]
@@ -409,6 +409,7 @@ class TelegramAgent:
             return None
             
         app = ApplicationBuilder().token(self.token).build()
+        self.application = app # [NEW] Store application object
         
         # 명령어 핸들러 등록
         app.add_handler(CommandHandler("start", self.start_cmd))

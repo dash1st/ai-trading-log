@@ -24,6 +24,8 @@ def run_bot():
     
     # 3. 자동 매매 데몬(AutoTrader) 체인 연결
     if telegram.is_ready:
+        # [Fix] AutoTrader 생성 전에 텔레그램 앱을 먼저 초기화하여 속성 오류 방지
+        app = telegram.get_app()
         auto_trader = AutoTrader(client, telegram)
         telegram.auto_trader = auto_trader
     

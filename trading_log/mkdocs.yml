@@ -1,5 +1,5 @@
 site_name: AI 트레이딩 봇 모의투자 일지
-site_url: http://43.202.65.40:8000
+site_url: https://dash1st.github.io/ai-trading-log/
 site_description: 트레이딩 봇의 모의투자 결과, 백테스트, 전략 분석 리포트 보관소
 theme:
   name: windmill
@@ -15,6 +15,8 @@ markdown_extensions:
 - pymdownx.magiclink
 - pymdownx.tasklist:
     custom_checkbox: true
+exclude_docs: |
+  games/edge-surf/readme.md
 nav:
 - 🏠 홈: index.md
 - 📈 매매 일지:

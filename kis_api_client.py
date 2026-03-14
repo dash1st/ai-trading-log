@@ -234,10 +234,11 @@ class KisApiClient:
             if res.status_code == 200:
                 data = res.json()
                 if data["rt_cd"] == "0":
+                    out1 = data.get("output1", [])
                     out2 = data.get("output2", [{}])[0]
                     # 예수금
                     dnca = int(out2.get("dnca_tot_amt", 0))    
-                    # 총 평가금액 (API 제공값, 시차 있을 수 있음)
+                    # 총 평가금액
                     tot = int(out2.get("tot_evlu_amt", 0))     
                     # 순자산
                     net = int(out2.get("nass_amt", 0))         
@@ -246,7 +247,8 @@ class KisApiClient:
                         "cash": dnca,
                         "total_evaluation": tot,
                         "net_asset": net,
-                        "account_no": self.account_no
+                        "account_no": self.account_no,
+                        "holdings": out1
                     }
                 else:
                     return {"error": f"서버 거절: {data.get('msg1')}"}

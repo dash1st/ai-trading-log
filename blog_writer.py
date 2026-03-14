@@ -92,7 +92,7 @@ class BlogWriter:
         with open(filepath, 'w', encoding='utf-8') as f:
             f.write(header)
 
-    def trigger_deploy(self):
+    def _trigger_deploy(self):
         """gh-pages 배포 스크립트를 백그라운드 구동"""
         try:
             deploy_script = os.path.join(self.base_dir, "deploy_docs.sh")
@@ -127,7 +127,7 @@ class BlogWriter:
             with open(filepath, 'w', encoding='utf-8') as f:
                 f.write(content)
                 
-        self.trigger_deploy()
+        self._trigger_deploy()
 
     def write_health_check(self, cpu: float, memory: float, total_asset: int):
         """1시간 단위 봇 생존 및 자산 기록 (최상단 표 삽입)"""
@@ -156,5 +156,4 @@ class BlogWriter:
             with open(filepath, 'w', encoding='utf-8') as f:
                 f.writelines(lines)
                 
-        self.trigger_deploy()
-        self.trigger_deploy()
+        self._trigger_deploy()

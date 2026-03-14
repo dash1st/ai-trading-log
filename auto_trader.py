@@ -33,6 +33,16 @@ class AutoTrader:
         
         # 텔레그램 채팅 채널 설정 (텔레그램 인스턴스가 주입됨)
         self.chat_id = os.environ.get("TELEGRAM_CHAT_ID")
+        self.bot_app = telegram_agent.application.bot # [NEW] Store bot object
+
+        # [Safety Guards]
+        self.max_positions = 20
+        self.max_buys_per_hour = 5
+        self.buys_this_hour = 0
+        self.last_reset_hour = datetime.now(pytz.timezone('Asia/Seoul')).hour
+
+        # [NEW] 봇 시작 시 현재 계좌 잔고를 바탕으로 포지션 동기화
+        self.sync_positions_from_kis()
 
     @classmethod
     def is_market_open(cls) -> bool:
@@ -56,11 +66,66 @@ class AutoTrader:
         now = datetime.now(kr_tz).strftime("%Y-%m-%d %H:%M:%S")
         print(f"[{now}] [AutoTrader] {msgs}")
 
+    def sync_positions_from_kis(self):
+        """
+        KIS API 실시간 잔고를 조회하여 봇의 메모리(self.positions)에 동기화합니다.
+        시스템 재부팅 등으로 인해 유실된 포지션을 복구하기 위함입니다.
+        """
+        self.log("🔄 KIS API 계좌 잔고를 바탕으로 포지션 동기화를 시작합니다...")
+        balance_data = self.kis_client.fetch_balance_dict()
+        
+        if "error" in balance_data:
+            self.log(f"❌ 포지션 동기화 실패: {balance_data['error']}")
+            return
+
+        holdings = balance_data.get("holdings", [])
+        new_positions = {}
+        kr_tz = pytz.timezone('Asia/Seoul')
+        now_str = datetime.now(kr_tz).strftime("%Y-%m-%d %H:%M:%S")
+
+        for item in holdings:
+            ticker = item.get("pdno")
+            qty = int(item.get("hldg_qty", 0))
+            if qty <= 0:
+                continue
+            
+            # 평균 매수단가 추출
+            buy_price = float(item.get("pchs_avg_pric", 0))
+            # 현재가 추출
+            current_price = float(item.get("prpr", buy_price))
+            
+            new_positions[ticker] = {
+                "buy_price": buy_price,
+                "qty": qty,
+                "high_water_mark": max(buy_price, current_price),
+                "current_price": current_price,
+                "buy_time": now_str # 정확한 매수시간은 알 수 없으므로 현재 시간 주입
+            }
+        
+        self.positions = new_positions
+        self.log(f"✅ 포지션 동기화 완료: {len(self.positions)}개 종목 포착")
+
     async def execute_auto_buy(self, ticker: str, current_price: float, reason: str, weight: float = 1.0):
         """
         조건 만족 시 즉시 시장가/지정가 기준 자동 매수를 강행하는 메서드 
         (스케줄러가 타점을 발견하면 이 메서드를 호출하며, 시그널 점수에 따른 비중(weight)을 곱하여 투자금을 산정)
         """
+        # [Safety Check 1] 최대 보유 종목 수 제한
+        if len(self.positions) >= self.max_positions:
+            self.log(f"⚠️ [매수 거부] 최대 보유 종목 수({self.max_positions}개) 도달. ({ticker})")
+            return
+
+        # [Safety Check 2] 시간당 매수 횟수 제한 (Circuit Breaker)
+        now_kr = datetime.now(pytz.timezone('Asia/Seoul'))
+        if now_kr.hour != self.last_reset_hour:
+            self.buys_this_hour = 0
+            self.last_reset_hour = now_kr.hour
+            
+        if self.buys_this_hour >= self.max_buys_per_hour:
+            self.log(f"🚨 [매수 거부] 시간당 매수 한도({self.max_buys_per_hour}회) 초과. 과열 방지를 위해 중단합니다. ({ticker})")
+            return
+
+        # [Safety Check 3] 이미 보유 중인 종목 제외
         if ticker in self.positions:
             self.log(f"이미 알을 품고 있는 종목입니다 ({ticker}). 추가 매수는 하지 않습니다.")
             return
@@ -82,6 +147,7 @@ class AutoTrader:
             return
             
         # 주문 성공 처리
+        self.buys_this_hour += 1 # 카운트 증가
         kr_tz = pytz.timezone('Asia/Seoul')
         now_str = datetime.now(kr_tz).strftime("%Y-%m-%d %H:%M:%S")
         self.positions[ticker] = {
@@ -92,8 +158,11 @@ class AutoTrader:
         }
         
         # 텔레그램 발송
-        msg = f"🔔 **[자동 매수 체결 알림]** 🔔\n*   종목코드: {ticker}\n*   수량: {qty}주 (비중 {weight}배격)\n*   단가: {current_price:,.0f} 원\n*   사유: {reason}\n*   트레일링 감시 시작: +{self.profit_percent}% 도달 후\n*   손절 커트라인: {self.loss_percent}%"
-        await self.telegram.client.bot.send_message(chat_id=self.chat_id, text=msg, parse_mode='Markdown')
+        from quant_analyzer import STOCK_NAMES
+        stock_name = STOCK_NAMES.get(ticker, ticker)
+        
+        msg = f"🔔 **[자동 매수 체결 알림]** 🔔\n*   종목: {stock_name} ({ticker})\n*   수량: {qty}주 (비중 {weight}배격)\n*   단가: {current_price:,.0f} 원\n*   사유: {reason}\n*   트레일링 감시 시작: +{self.profit_percent}% 도달 후\n*   손절 커트라인: {self.loss_percent}%"
+        await self.bot_app.send_message(chat_id=self.chat_id, text=msg, parse_mode='Markdown')
 
     async def monitor_open_positions(self):
         """
@@ -119,6 +188,11 @@ class AutoTrader:
                 
             current_price = df.iloc[-1]['Close']
             
+            # [Fix] 동기화된 포지션이 처음 감시될 때 high_water_mark가 0인 경우 방지
+            if pos.get("high_water_mark", 0) == 0:
+                self.positions[ticker]["high_water_mark"] = current_price
+                hwm = current_price
+
             # 📈 최고가(고점) 갱신
             if current_price > hwm:
                 self.positions[ticker]["high_water_mark"] = current_price
@@ -151,8 +225,11 @@ class AutoTrader:
                 # 포지션 테이블에서 제거
                 del self.positions[ticker]
                 
-                msg = f"🎉 **[트레일링 스탑 매도 완료]** 🎉\n*   종목: {ticker}\n*   수량: {qty}주\n*   매수단가: {buy_price:,.0f} 원\n*   매도단가: {current_price:,.0f} 원\n*   (최고점 {hwm:,.0f}원에서 -{self.trailing_drop_percent}% 떨어져 익절 청산)\n*   **최종 수익률: +{profit_rate:.2f}%**\n*   **실현 손익: {realized_profit:,.0f}원**"
-                await self.telegram.client.bot.send_message(chat_id=self.chat_id, text=msg, parse_mode='Markdown')
+                from quant_analyzer import STOCK_NAMES
+                stock_name = STOCK_NAMES.get(ticker, ticker)
+
+                msg = f"🎉 **[트레일링 스탑 매도 완료]** 🎉\n*   종목: **{stock_name}** ({ticker})\n*   수량: {qty}주\n*   매수단가: {buy_price:,.0f} 원\n*   매도단가: {current_price:,.0f} 원\n*   (최고점 {hwm:,.0f}원에서 -{self.trailing_drop_percent}% 떨어져 익절 청산)\n*   **최종 수익률: +{profit_rate:.2f}%**\n*   **실현 손익: {realized_profit:,.0f}원**"
+                await self.bot_app.send_message(chat_id=self.chat_id, text=msg, parse_mode='Markdown')
 
                 # 블로그(매매 일지)에 자동 기록
                 try:
@@ -172,8 +249,11 @@ class AutoTrader:
                 
                 del self.positions[ticker]
                 
-                msg = f"🚨 **[자동 기계적 손절 완료]** 🚨\n*   종목: {ticker}\n*   수량: {qty}주\n*   매수단가: {buy_price:,.0f} 원\n*   매도단가: {current_price:,.0f} 원\n*   **최종 손실률: {profit_rate:.2f}%**\n*   **실현 손실: {realized_loss:,.0f}원**"
-                await self.telegram.client.bot.send_message(chat_id=self.chat_id, text=msg, parse_mode='Markdown')
+                from quant_analyzer import STOCK_NAMES
+                stock_name = STOCK_NAMES.get(ticker, ticker)
+
+                msg = f"🚨 **[자동 기계적 손절 완료]** 🚨\n*   종목: **{stock_name}** ({ticker})\n*   수량: {qty}주\n*   매수단가: {buy_price:,.0f} 원\n*   매도단가: {current_price:,.0f} 원\n*   **최종 손실률: {profit_rate:.2f}%**\n*   **실현 손익: {realized_loss:,.0f}원**"
+                await self.bot_app.send_message(chat_id=self.chat_id, text=msg, parse_mode='Markdown')
 
                 # 블로그(매매 일지)에 자동 기록
                 try:
@@ -204,7 +284,7 @@ class AutoTrader:
             lines.append(f"{status_icon} **{stock_name}** ({ticker}) {qty}주 | 매수단가: {buy_price:,.0f}원 | 현재가: {current_price:,.0f}원 | 수익률: **{profit_rate:+.2f}%** (장중고점: {hwm:,.0f}원)")
             
         msg = "\n".join(lines)
-        await self.telegram.client.bot.send_message(chat_id=self.chat_id, text=msg, parse_mode='Markdown')
+        await self.bot_app.send_message(chat_id=self.chat_id, text=msg, parse_mode='Markdown')
 
     async def run_loop(self):
         """오토 트레이더 영구 데몬 반복 루프"""

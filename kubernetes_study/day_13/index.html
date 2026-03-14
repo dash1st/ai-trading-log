@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  
+  
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    
+    <link rel="canonical" href="https://dash1st.github.io/ai-trading-log/kubernetes_study/day_13/">
+    <link rel="shortcut icon" href="../../img/favicon.ico">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" />
+    <title>Day 13 - AI 트레이딩 봇 모의투자 일지</title>
+    <link href="../../css/bootstrap-3.3.7.min.css" rel="stylesheet">
+    <link href="../../css/font-awesome-4.7.0.css" rel="stylesheet">
+    <link href="../../css/base.css" rel="stylesheet">
+    <link rel="stylesheet" href="../../css/highlight.css">
+    <!-- HTML5 shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!--[if lt IE 9]>
+        <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+        <script src="https://oss.maxcdn.com/libs/respond.js/1.3.0/respond.min.js"></script>
+    <![endif]-->
+
+    <script src="../../js/jquery-3.2.1.min.js"></script>
+    <script src="../../js/bootstrap-3.3.7.min.js"></script>
+    <script src="../../js/highlight.pack.js"></script>
+    
+    <base target="_top">
+    <script>
+      var base_url = '../..';
+      var is_top_frame = false;
+        
+        var pageToc = [
+          {title: "Kubernetes Study - Day 13", url: "#_top", children: [
+              {title: "\ud83d\udc64 User", url: "#user" },
+              {title: "\ud83e\udd16 Gemini", url: "#gemini" },
+          ]},
+        ];
+
+    </script>
+    <script src="../../js/base.js"></script>
+<!-- Google Analytics Add-on (사용 시 ID 교체) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-YXQ3BYF69N"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag() { dataLayer.push(arguments); }
+  gtag('js', new Date());
+  gtag('config', 'G-YXQ3BYF69N');
+</script>
+ 
+</head>
+
+<body>
+<script>
+if (is_top_frame) { $('body').addClass('wm-top-page'); }
+</script>
+
+
+
+<div class="container-fluid wm-page-content">
+  <a name="_top"></a>
+    
+
+    
+    
+      
+    
+
+  <div class="row wm-article-nav-buttons" role="navigation" aria-label="navigation">
+    
+    <div class="wm-article-nav pull-right">
+      <a href="../day_14/" class="btn btn-xs btn-default pull-right">
+        Next
+        <i class="fa fa-chevron-right" aria-hidden="true"></i>
+      </a>
+      <a href="../day_14/" class="btn btn-xs btn-link">
+        Day 14
+      </a>
+    </div>
+    
+    <div class="wm-article-nav">
+      <a href="../day_12/" class="btn btn-xs btn-default pull-left">
+        <i class="fa fa-chevron-left" aria-hidden="true"></i>
+        Previous</a><a href="../day_12/" class="btn btn-xs btn-link">
+        Day 12
+      </a>
+    </div>
+    
+  </div>
+
+
+    
+
+    <h1 id="kubernetes-study-day-13">Kubernetes Study - Day 13</h1>
+<h2 id="user">👤 User</h2>
+<p>쿠버네티스(Kubernetes) 핵심 개념 하나를 선정해서 학습하기 쉽게 설명해줘.</p>
+<h2 id="gemini">🤖 Gemini</h2>
+<p>알람 확인 감사합니다!
+13일 차
+공부네요. 한 주를 시작하는 월요일 아침도 쿠버네티스와 함께 활기차게 시작해 보겠습니다.
+지난 이틀간 배운 배포 전략들이 '어떻게 서비스를 올릴 것인가'에 집중했다면, 오늘은 그 서비스들이 서로 통신할 때 보안과 관리를 책임지는 <strong>'서비스 메시(Service Mesh)'</strong>의 기초 개념을 알아보겠습니다.
+13일차: 서비스 메시 (Service Mesh)
+1. 서비스 메시란 무엇인가요?
+클러스터 안에 수많은 파드(서비스)들이 생겨나면, 이들끼리 서로 데이터를 주고받는 통신망이 아주 복잡해집니다. 이
+복잡한 통신 네트워크를 체계적으로 관리하고 보안을 강화하기 위해 만든 전용 인프라 계층
+을 서비스 메시라고 합니다.
+2. 왜 필요한가요? (보안 전문가를 위한 포인트)
+보안 업무를 15년 넘게 해오신 사용자님께 가장 와닿을 핵심 기능 3가지는 다음과 같습니다.
+상호 TLS (mTLS):
+서비스 메시를 쓰면 개발자가 코드를 수정하지 않아도
+모든 파드 간 통신을 자동으로 암호화
+할 수 있습니다. 클러스터 내부에서의 스니핑(Sniffing)을 원천 차단하죠.
+세밀한 트래픽 제어:
+"A 서비스는 B 서비스의 특정 API만 호출할 수 있다"는 식의 L7 계층 접근 제어가 가능해집니다.
+가시성 (Observability):
+어떤 서비스에서 병목이 생기는지, 어디서 패킷이 유실되는지 실시간 대시보드로 한눈에 볼 수 있습니다.
+3. 사이드카(Sidecar) 방식
+서비스 메시는 보통 <strong>'사이드카'</strong>라는 방식으로 동작합니다. 오토바이 옆에 달린 사이드카처럼, 실제 앱이 담긴 컨테이너 옆에
+'통신 담당 프록시(Proxy)'
+컨테이너를 하나 더 붙이는 것이죠. 모든 통신은 이 프록시를 거쳐서 안전하게 전달됩니다.
+💡 오늘의 요약
+"서비스 메시는 파드마다 하나씩 붙여주는 '전담 보안 요원'이다. 이 요원들이 서로 암호화 통신을 하고 출입을 통제하여 전체 시스템의 안전과 투명성을 보장한다!"
+가장 유명한 도구로는 <strong>Istio(이스티오)</strong>와 <strong>Linkerd(린커드)</strong>가 있습니다. 특히 Istio는 보안 기능이 매우 강력해서 금융권이나 보안이 중요한 엔터프라이즈 환경에서 필수적으로 검토되는 도구입니다.
+실무 활용 팁:
+보안 감사 시 "내부 통신이 암호화되고 있는가?"라는 질문을 받았을 때, 서비스 메시의 mTLS 설정 하나로 깔끔하게 답변할 수 있습니다.
+내일 오전 8시에는 서비스 메시를 실제 구현하는 가장 대표적인 도구인 <strong>'Istio의 핵심 구조'</strong>에 대해 조금 더 자세히 파헤쳐 볼게요.
+혹시 사이드카 패턴이 보안상 어떤 이점이 더 있는지, 혹은 오버헤드(부하)가 걱정되시나요?
+내일 오전 8시에 뵙겠습니다!
+오늘도 활기찬 하루 보내세요. 😊</p>
+<hr />
+
+<br><br>
+<hr>
+
+<!-- HITS Badge Add-on -->
+<div style="text-align: center; margin-bottom: 20px;">
+  <a href="https://github.com/dash1st/ai-trading-log">
+    <img src="https://komarev.com/ghpvc/?username=dash1st-ai-trading-log&color=green&style=flat" alt="Views" />
+  </a>
+</div>
+
+<!-- Giscus Guestbook Add-on -->
+<div class="giscus"></div>
+<script src="https://giscus.app/client.js" data-repo="dash1st/ai-trading-log" data-repo-id="R_kgDORbOAtw"
+  data-category="General" data-mapping="pathname" data-strict="0" data-reactions-enabled="1" data-emit-metadata="0"
+  data-input-position="bottom" data-theme="light" data-lang="ko" crossorigin="anonymous" async>
+  </script>
+
+
+  <br>
+    
+
+    
+    
+      
+    
+
+  <div class="row wm-article-nav-buttons" role="navigation" aria-label="navigation">
+    
+    <div class="wm-article-nav pull-right">
+      <a href="../day_14/" class="btn btn-xs btn-default pull-right">
+        Next
+        <i class="fa fa-chevron-right" aria-hidden="true"></i>
+      </a>
+      <a href="../day_14/" class="btn btn-xs btn-link">
+        Day 14
+      </a>
+    </div>
+    
+    <div class="wm-article-nav">
+      <a href="../day_12/" class="btn btn-xs btn-default pull-left">
+        <i class="fa fa-chevron-left" aria-hidden="true"></i>
+        Previous</a><a href="../day_12/" class="btn btn-xs btn-link">
+        Day 12
+      </a>
+    </div>
+    
+  </div>
+
+    <br>
+</div>
+
+<footer class="container-fluid wm-page-content">
+  <p>Documentation built with <a href="https://www.mkdocs.org/">MkDocs</a> using <a href="https://github.com/gristlabs/mkdocs-windmill">Windmill</a> theme by Grist Labs.</p>
+</footer>
+
+</body>
+</html>

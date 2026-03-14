@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  
+  
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="트레이딩 봇의 모의투자 결과, 백테스트, 전략 분석 리포트 보관소">
+    
+    <link rel="canonical" href="https://dash1st.github.io/ai-trading-log/">
+    <link rel="shortcut icon" href="./img/favicon.ico">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" />
+    <title>AI 트레이딩 봇 모의투자 일지</title>
+    <link href="./css/bootstrap-3.3.7.min.css" rel="stylesheet">
+    <link href="./css/font-awesome-4.7.0.css" rel="stylesheet">
+    <link href="./css/base.css" rel="stylesheet">
+    <link rel="stylesheet" href="./css/highlight.css">
+    <!-- HTML5 shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!--[if lt IE 9]>
+        <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+        <script src="https://oss.maxcdn.com/libs/respond.js/1.3.0/respond.min.js"></script>
+    <![endif]-->
+
+    <script src="./js/jquery-3.2.1.min.js"></script>
+    <script src="./js/bootstrap-3.3.7.min.js"></script>
+    <script src="./js/highlight.pack.js"></script>
+    
+      <script src="./js/elasticlunr.min.js"></script>
+    
+    <base target="_top">
+    <script>
+      var base_url = '.';
+      var is_top_frame = (window === window.parent);
+        
+        var pageToc = [
+          {title: "\ud83d\udcca AI \ud2b8\ub808\uc774\ub529 \ubd07 \ub300\uc2dc\ubcf4\ub4dc \uba54\uc778", url: "#_top", children: [
+              {title: "\ud83d\ude80 \ucd5c\uc2e0 \ud604\ud669", url: "#_1" },
+          ]},
+        ];
+
+    </script>
+    <script src="./js/base.js"></script>
+<!-- Google Analytics Add-on (사용 시 ID 교체) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-YXQ3BYF69N"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag() { dataLayer.push(arguments); }
+  gtag('js', new Date());
+  gtag('config', 'G-YXQ3BYF69N');
+</script>
+ 
+</head>
+
+<body>
+<script>
+if (is_top_frame) { $('body').addClass('wm-top-page'); }
+</script>
+
+<nav class="navbar wm-page-top-frame">
+  <div class="container-fluid wm-top-container">
+    
+    <div class="wm-top-tool pull-right wm-vcenter">
+      <form class="dropdown wm-vcentered" id="wm-search-form" action="./search.html">
+        
+        <button id="wm-search-show" class="btn btn-sm btn-default" type="submit"
+          ><i class="fa fa-search" aria-hidden="true"></i></button>
+
+        <div class="input-group input-group-sm wm-top-search">
+          <input type="text" name="q" class="form-control" id="mkdocs-search-query" placeholder="Search" autocomplete="off">
+          <span class="input-group-btn" role="search">
+            
+            <button class="btn btn-default dropdown-toggle collapse" data-toggle="dropdown" type="button"><span class="caret"></span></button>
+            <ul id="mkdocs-search-results" class="dropdown-menu dropdown-menu-right"></ul>
+            <button id="wm-search-go" class="btn btn-default" type="submit"><i class="fa fa-search" aria-hidden="true"></i></button>
+          </span>
+        </div>
+      </form>
+    </div>
+
+    
+    <div class="wm-top-tool wm-vcenter pull-right wm-small-left">
+      <button id="wm-toc-button" type="button" class="btn btn-sm btn-default wm-vcentered"><i class="fa fa-th-list" aria-hidden="true"></i></button>
+    </div>
+
+    
+    
+
+    
+    <a href="" class="wm-top-brand wm-top-link wm-vcenter">
+      
+      <div class="wm-top-title">
+        AI 트레이딩 봇 모의투자 일지<br>
+        
+      </div>
+    </a>
+  </div>
+</nav>
+
+  <div id="main-content" class="wm-page-top-frame">
+    
+<nav class="wm-toc-pane">
+  
+  <ul class="wm-toctree">
+        <li class="wm-toc-li wm-toc-lev1 "><a href="" class="wm-article-link wm-toc-text">🏠 홈</a>
+</li>
+        <li class="wm-toc-li wm-toc-lev1 wm-toc-opener"><span class="wm-toc-text">📈 매매 일지</span>
+</li>
+<li class="wm-toc-li-nested collapse">
+  <ul class="wm-toctree">
+      <li class="wm-toc-li wm-toc-lev2 "><a href="logs/2026-02/" class="wm-article-link wm-toc-text">2026년 2월</a>
+</li>
+  </ul>
+</li>
+
+        <li class="wm-toc-li wm-toc-lev1 wm-toc-opener"><span class="wm-toc-text">🧠 트레이딩 전략</span>
+</li>
+<li class="wm-toc-li-nested collapse">
+  <ul class="wm-toctree">
+      <li class="wm-toc-li wm-toc-lev2 "><a href="strategy/casper_fvg/" class="wm-article-link wm-toc-text">Casper FVG 전략</a>
+</li>
+      <li class="wm-toc-li wm-toc-lev2 "><a href="strategy/ross_cameron/" class="wm-article-link wm-toc-text">Ross Cameron 돌파 전략</a>
+</li>
+  </ul>
+</li>
+
+        <li class="wm-toc-li wm-toc-lev1 wm-toc-opener"><span class="wm-toc-text">🛠️ 시스템 로깅</span>
+</li>
+<li class="wm-toc-li-nested collapse">
+  <ul class="wm-toctree">
+      <li class="wm-toc-li wm-toc-lev2 "><a href="system/developer_log/" class="wm-article-link wm-toc-text">👨‍💻 개발 로그</a>
+</li>
+      <li class="wm-toc-li wm-toc-lev2 "><a href="system/health_check/" class="wm-article-link wm-toc-text">💓 헬스 체크</a>
+</li>
+  </ul>
+</li>
+
+        <li class="wm-toc-li wm-toc-lev1 wm-toc-opener"><span class="wm-toc-text">🚀 쿠버네티스 스터디</span>
+</li>
+<li class="wm-toc-li-nested collapse">
+  <ul class="wm-toctree">
+      <li class="wm-toc-li wm-toc-lev2 "><a href="kubernetes_study/00_intro_and_misc/" class="wm-article-link wm-toc-text">Intro & Misc</a>
+</li>
+      <li class="wm-toc-li wm-toc-lev2 "><a href="kubernetes_study/day_01/" class="wm-article-link wm-toc-text">Day 1</a>
+</li>
+      <li class="wm-toc-li wm-toc-lev2 "><a href="kubernetes_study/day_02/" class="wm-article-link wm-toc-text">Day 2</a>
+</li>
+      <li class="wm-toc-li wm-toc-lev2 "><a href="kubernetes_study/day_03/" class="wm-article-link wm-toc-text">Day 3</a>
+</li>
+      <li class="wm-toc-li wm-toc-lev2 "><a href="kubernetes_study/day_04/" class="wm-article-link wm-toc-text">Day 4</a>
+</li>
+      <li class="wm-toc-li wm-toc-lev2 "><a href="kubernetes_study/day_05/" class="wm-article-link wm-toc-text">Day 5</a>
+</li>
+      <li class="wm-toc-li wm-toc-lev2 "><a href="kubernetes_study/day_06/" class="wm-article-link wm-toc-text">Day 6</a>
+</li>
+      <li class="wm-toc-li wm-toc-lev2 "><a href="kubernetes_study/day_07/" class="wm-article-link wm-toc-text">Day 7</a>
+</li>
+      <li class="wm-toc-li wm-toc-lev2 "><a href="kubernetes_study/day_08/" class="wm-article-link wm-toc-text">Day 8</a>
+</li>
+      <li class="wm-toc-li wm-toc-lev2 "><a href="kubernetes_study/day_09/" class="wm-article-link wm-toc-text">Day 9</a>
+</li>
+      <li class="wm-toc-li wm-toc-lev2 "><a href="kubernetes_study/day_10/" class="wm-article-link wm-toc-text">Day 10</a>
+</li>
+      <li class="wm-toc-li wm-toc-lev2 "><a href="kubernetes_study/day_11/" class="wm-article-link wm-toc-text">Day 11</a>
+</li>
+      <li class="wm-toc-li wm-toc-lev2 "><a href="kubernetes_study/day_12/" class="wm-article-link wm-toc-text">Day 12</a>
+</li>
+      <li class="wm-toc-li wm-toc-lev2 "><a href="kubernetes_study/day_13/" class="wm-article-link wm-toc-text">Day 13</a>
+</li>
+      <li class="wm-toc-li wm-toc-lev2 "><a href="kubernetes_study/day_14/" class="wm-article-link wm-toc-text">Day 14</a>
+</li>
+      <li class="wm-toc-li wm-toc-lev2 "><a href="kubernetes_study/day_15/" class="wm-article-link wm-toc-text">Day 15</a>
+</li>
+      <li class="wm-toc-li wm-toc-lev2 "><a href="kubernetes_study/day_16/" class="wm-article-link wm-toc-text">Day 16</a>
+</li>
+      <li class="wm-toc-li wm-toc-lev2 "><a href="kubernetes_study/day_17/" class="wm-article-link wm-toc-text">Day 17</a>
+</li>
+      <li class="wm-toc-li wm-toc-lev2 "><a href="kubernetes_study/day_18/" class="wm-article-link wm-toc-text">Day 18</a>
+</li>
+      <li class="wm-toc-li wm-toc-lev2 "><a href="kubernetes_study/day_19/" class="wm-article-link wm-toc-text">Day 19</a>
+</li>
+      <li class="wm-toc-li wm-toc-lev2 "><a href="kubernetes_study/day_20/" class="wm-article-link wm-toc-text">Day 20</a>
+</li>
+      <li class="wm-toc-li wm-toc-lev2 "><a href="kubernetes_study/day_21/" class="wm-article-link wm-toc-text">Day 21</a>
+</li>
+      <li class="wm-toc-li wm-toc-lev2 "><a href="kubernetes_study/day_22/" class="wm-article-link wm-toc-text">Day 22</a>
+</li>
+      <li class="wm-toc-li wm-toc-lev2 "><a href="kubernetes_study/day_23/" class="wm-article-link wm-toc-text">Day 23</a>
+</li>
+      <li class="wm-toc-li wm-toc-lev2 "><a href="kubernetes_study/day_24/" class="wm-article-link wm-toc-text">Day 24</a>
+</li>
+      <li class="wm-toc-li wm-toc-lev2 "><a href="kubernetes_study/day_25/" class="wm-article-link wm-toc-text">Day 25</a>
+</li>
+      <li class="wm-toc-li wm-toc-lev2 "><a href="kubernetes_study/day_26/" class="wm-article-link wm-toc-text">Day 26</a>
+</li>
+      <li class="wm-toc-li wm-toc-lev2 "><a href="kubernetes_study/day_27/" class="wm-article-link wm-toc-text">Day 27</a>
+</li>
+      <li class="wm-toc-li wm-toc-lev2 "><a href="kubernetes_study/day_28/" class="wm-article-link wm-toc-text">Day 28</a>
+</li>
+      <li class="wm-toc-li wm-toc-lev2 "><a href="kubernetes_study/day_29/" class="wm-article-link wm-toc-text">Day 29</a>
+</li>
+      <li class="wm-toc-li wm-toc-lev2 "><a href="kubernetes_study/day_30/" class="wm-article-link wm-toc-text">Day 30</a>
+</li>
+      <li class="wm-toc-li wm-toc-lev2 "><a href="kubernetes_study/day_31/" class="wm-article-link wm-toc-text">Day 31</a>
+</li>
+      <li class="wm-toc-li wm-toc-lev2 "><a href="kubernetes_study/day_32/" class="wm-article-link wm-toc-text">Day 32</a>
+</li>
+  </ul>
+</li>
+
+        <li class="wm-toc-li wm-toc-lev1 wm-toc-opener"><span class="wm-toc-text">🎮 미니 게임</span>
+</li>
+<li class="wm-toc-li-nested collapse">
+  <ul class="wm-toctree">
+      <li class="wm-toc-li wm-toc-lev2 "><a href="games/edge-surf/" class="wm-article-link wm-toc-text">🏄‍♂️ 엣지 서핑 게임</a>
+</li>
+  </ul>
+</li>
+
+  </ul>
+</nav>
+
+    <div class="wm-content-pane">
+      <iframe class="wm-article" name="article"></iframe>
+    </div>
+  </div>
+
+<div class="container-fluid wm-page-content">
+  <a name="_top"></a>
+    
+
+    
+    
+      
+    
+
+  <div class="row wm-article-nav-buttons" role="navigation" aria-label="navigation">
+    
+    <div class="wm-article-nav pull-right">
+      <a href="logs/2026-02/" class="btn btn-xs btn-default pull-right">
+        Next
+        <i class="fa fa-chevron-right" aria-hidden="true"></i>
+      </a>
+      <a href="logs/2026-02/" class="btn btn-xs btn-link">
+        2026년 2월
+      </a>
+    </div>
+    
+  </div>
+
+
+    
+
+    <h1 id="ai">📊 AI 트레이딩 봇 대시보드 메인</h1>
+<p>환영합니다! 이 곳은 AI 트레이딩 봇이 24시간 백그라운드로 돌아가며 생성하는 <strong>모의투자 일지, 보고서, 전략 아카이브</strong> 공간입니다.</p>
+<blockquote>
+<p>봇이 자동으로 <code>docs/</code> 폴더 하위에 마크다운(<code>.md</code>) 파일을 작성하면, 이 웹페이지에 실시간으로 반영됩니다!</p>
+</blockquote>
+<h2 id="_1">🚀 최신 현황</h2>
+<ul>
+<li><strong>현재 상태</strong>: 모의투자 진행 중 🟢</li>
+<li><strong>마지막 업데이트</strong>: 오늘</li>
+</ul>
+<hr />
+<p>👈 왼쪽 메뉴탐색기를 통해 봇이 남긴 방대한 기록들을 확인해보세요.</p>
+
+<br><br>
+<hr>
+
+<!-- HITS Badge Add-on -->
+<div style="text-align: center; margin-bottom: 20px;">
+  <a href="https://github.com/dash1st/ai-trading-log">
+    <img src="https://komarev.com/ghpvc/?username=dash1st-ai-trading-log&color=green&style=flat" alt="Views" />
+  </a>
+</div>
+
+<!-- Giscus Guestbook Add-on -->
+<div class="giscus"></div>
+<script src="https://giscus.app/client.js" data-repo="dash1st/ai-trading-log" data-repo-id="R_kgDORbOAtw"
+  data-category="General" data-mapping="pathname" data-strict="0" data-reactions-enabled="1" data-emit-metadata="0"
+  data-input-position="bottom" data-theme="light" data-lang="ko" crossorigin="anonymous" async>
+  </script>
+
+
+  <br>
+    
+
+    
+    
+      
+    
+
+  <div class="row wm-article-nav-buttons" role="navigation" aria-label="navigation">
+    
+    <div class="wm-article-nav pull-right">
+      <a href="logs/2026-02/" class="btn btn-xs btn-default pull-right">
+        Next
+        <i class="fa fa-chevron-right" aria-hidden="true"></i>
+      </a>
+      <a href="logs/2026-02/" class="btn btn-xs btn-link">
+        2026년 2월
+      </a>
+    </div>
+    
+  </div>
+
+    <br>
+</div>
+
+<footer class="container-fluid wm-page-content">
+  <p>Documentation built with <a href="https://www.mkdocs.org/">MkDocs</a> using <a href="https://github.com/gristlabs/mkdocs-windmill">Windmill</a> theme by Grist Labs.</p>
+</footer>
+
+</body>
+</html>
+<!--
+MkDocs version : 1.6.1
+Build Date UTC : 2026-03-14 18:01:35.598367+00:00
+-->

@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+
+{% block analytics %}
+<!-- Google Analytics Add-on (사용 시 ID 교체) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-YXQ3BYF69N"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag() { dataLayer.push(arguments); }
+  gtag('js', new Date());
+  gtag('config', 'G-YXQ3BYF69N');
+</script>
+{% endblock %}
+
+{% block content %}
+{{ super() }}
+
+<br><br>
+<hr>
+
+<!-- HITS Badge Add-on -->
+<div style="text-align: center; margin-bottom: 20px;">
+  <a href="https://github.com/dash1st/ai-trading-log">
+    <img src="https://komarev.com/ghpvc/?username=dash1st-ai-trading-log&color=green&style=flat" alt="Views" />
+  </a>
+</div>
+
+<!-- Giscus Guestbook Add-on -->
+<div class="giscus"></div>
+<script src="https://giscus.app/client.js" data-repo="dash1st/ai-trading-log" data-repo-id="R_kgDORbOAtw"
+  data-category="General" data-mapping="pathname" data-strict="0" data-reactions-enabled="1" data-emit-metadata="0"
+  data-input-position="bottom" data-theme="light" data-lang="ko" crossorigin="anonymous" async>
+  </script>
+{% endblock %}

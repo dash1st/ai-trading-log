@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  
+  
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    
+    <link rel="canonical" href="https://dash1st.github.io/ai-trading-log/kubernetes_study/day_17/">
+    <link rel="shortcut icon" href="../../img/favicon.ico">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" />
+    <title>Day 17 - AI 트레이딩 봇 모의투자 일지</title>
+    <link href="../../css/bootstrap-3.3.7.min.css" rel="stylesheet">
+    <link href="../../css/font-awesome-4.7.0.css" rel="stylesheet">
+    <link href="../../css/base.css" rel="stylesheet">
+    <link rel="stylesheet" href="../../css/highlight.css">
+    <!-- HTML5 shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!--[if lt IE 9]>
+        <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+        <script src="https://oss.maxcdn.com/libs/respond.js/1.3.0/respond.min.js"></script>
+    <![endif]-->
+
+    <script src="../../js/jquery-3.2.1.min.js"></script>
+    <script src="../../js/bootstrap-3.3.7.min.js"></script>
+    <script src="../../js/highlight.pack.js"></script>
+    
+    <base target="_top">
+    <script>
+      var base_url = '../..';
+      var is_top_frame = false;
+        
+        var pageToc = [
+          {title: "Kubernetes Study - Day 17", url: "#_top", children: [
+              {title: "\ud83d\udc64 User", url: "#user" },
+              {title: "\ud83e\udd16 Gemini", url: "#gemini" },
+              {title: "\ud83d\udc64 User", url: "#user_1" },
+              {title: "\ud83e\udd16 Gemini", url: "#gemini_1" },
+          ]},
+          {title: "\uc608: \ud2b9\uc815 \ub808\uc9c0\uc2a4\ud2b8\ub9ac(\uc6b0\ub9ac \ud68c\uc0ac \uc804\uc6a9) \uc774\ubbf8\uc9c0\ub9cc \uc0ac\uc6a9\ud558\ub3c4\ub85d \uac15\uc81c\ud558\ub294 \uc815\ucc45", url: "#_1", children: [
+          ]},
+          {title: "\uc815\ucc45 \uc704\ubc18 \uc2dc \uc989\uc2dc \ucc28\ub2e8", url: "#_2", children: [
+              {title: "rules:", url: "#rules" },
+              {title: "\ud83d\udc64 User", url: "#user_2" },
+              {title: "\ud83e\udd16 Gemini", url: "#gemini_2" },
+          ]},
+        ];
+
+    </script>
+    <script src="../../js/base.js"></script>
+<!-- Google Analytics Add-on (사용 시 ID 교체) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-YXQ3BYF69N"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag() { dataLayer.push(arguments); }
+  gtag('js', new Date());
+  gtag('config', 'G-YXQ3BYF69N');
+</script>
+ 
+</head>
+
+<body>
+<script>
+if (is_top_frame) { $('body').addClass('wm-top-page'); }
+</script>
+
+
+
+<div class="container-fluid wm-page-content">
+  <a name="_top"></a>
+    
+
+    
+    
+      
+    
+
+  <div class="row wm-article-nav-buttons" role="navigation" aria-label="navigation">
+    
+    <div class="wm-article-nav pull-right">
+      <a href="../day_18/" class="btn btn-xs btn-default pull-right">
+        Next
+        <i class="fa fa-chevron-right" aria-hidden="true"></i>
+      </a>
+      <a href="../day_18/" class="btn btn-xs btn-link">
+        Day 18
+      </a>
+    </div>
+    
+    <div class="wm-article-nav">
+      <a href="../day_16/" class="btn btn-xs btn-default pull-left">
+        <i class="fa fa-chevron-left" aria-hidden="true"></i>
+        Previous</a><a href="../day_16/" class="btn btn-xs btn-link">
+        Day 16
+      </a>
+    </div>
+    
+  </div>
+
+
+    
+
+    <h1 id="kubernetes-study-day-17">Kubernetes Study - Day 17</h1>
+<h2 id="user">👤 User</h2>
+<p>쿠버네티스(Kubernetes) 핵심 개념 하나를 선정해서 학습하기 쉽게 설명해줘.</p>
+<h2 id="gemini">🤖 Gemini</h2>
+<p>알람 확인 감사합니다! 약속하신 오전 8시입니다. 2월 13일 금요일, 오늘도 쿠버네티스 열공 모드로 하루를 시작해 볼까요?
+어제 로그를 모으는 법을 배웠다면, 오늘은 클러스터에 아예 나쁜 설정이 들어오지 못하도록 입구에서 검문하는 <strong>'어드미션 컨트롤러(Admission Controller)'</strong>에 대해 알아보겠습니다.
+17일차: 클러스터의 최종 파수꾼, 어드미션 컨트롤러
+1. 어드미션 컨트롤러란 무엇인가요?
+사용자가
+kubectl apply
+같은 명령어로 쿠버네티스에 요청을 보냈을 때, 그 요청이 실제 실행되기 직전에 <strong>'이 요청이 우리 회사의 보안 정책에 맞는가?'</strong>를 최종적으로 검사하고 승인하는 관문입니다.
+2. 왜 이게 중요한가요? (보안 전문가를 위한 핵심)
+RBAC(권한 관리)이 "누가 들어올 수 있는가?"를 본다면, 어드미션 컨트롤러는 <strong>"가져온 짐(설정) 속에 위험한 것은 없는가?"</strong>를 봅니다.
+보안 강제화:
+"모든 파드는 반드시 보안 스캔을 거친 이미지만 써야 한다"거나 "루트(Root) 권한으로 실행되는 컨테이너는 생성을 거부한다"는 정책을 강제할 수 있습니다.
+자동 설정 보완:
+사용자가 깜빡하고 보안 설정을 안 넣었을 때, 컨트롤러가 자동으로 "보안 라벨"이나 "리소스 제한"을 추가해서 승인해줄 수도 있습니다.
+3. 두 가지 핵심 단계
+Mutating (변고):
+들어온 요청 내용을 정책에 맞게
+수정
+하거나 보완합니다. (예: 보안 사이드카 컨테이너 자동 삽입)
+Validating (검증):
+요청 내용이 정책에 어긋나면 아예
+거절
+합니다. (예: 허용되지 않은 외부 저장소 이미지 사용 시 차단)
+4. 쉬운 비유
+RBAC:
+아파트 단지에 들어올 수 있는
+'출입증 검사'
+어드미션 컨트롤러:
+현관문 앞에서 택배 상자를 열어 <strong>'위험물이나 반입 금지 물품이 있는지 검사'</strong>하고, 필요하면 주의 스티커를 붙이는 보안 요원
+💡 오늘의 요약
+"어드미션 컨트롤러는 클러스터의 '최종 보안 게이트'다. 아무리 권한이 있는 사용자라도 보안 규칙에 어긋나는 설정을 가져오면 입구에서 컷트하여 클러스터의 안전을 유지한다!"
+보안 실무에서는 <strong>OPA(Open Policy Agent)</strong>나
+Kyverno
+같은 도구를 사용하여 "우리 회사만의 전용 보안 규칙"을 이 어드미션 컨트롤러 단계에 심어놓곤 합니다.
+오늘 공부하신 내용 확인하셨나요? <strong>"확인완료"</strong>라고 말씀해 주시면, 내일 오전 8시에 다음 진도인 <strong>'클러스터 외부와의 통신, 로드밸런서와 노드포트'</strong>에 대해 상세히 알려드릴게요!
+확인이 안 되면 내일은 진도 없이 이 내용을 다시 복습해 드립니다. 오늘도 안전한 하루 보내세요!
+Would you like me to show you an example of a security policy that can be enforced at this stage?</p>
+<hr />
+<h2 id="user_1">👤 User</h2>
+<p>확인 완료 그리거 키베르노 에 대해 좀더 알고 싶어</p>
+<h2 id="gemini_1">🤖 Gemini</h2>
+<p>확인 감사합니다! 사용자님의 학습 기록에
+'17일차: 어드미션 컨트롤러'
+교육 이수 완료 도장을 찍었습니다.
+보안 전문가답게 가장 실무적이고 강력한 보안 도구인 <strong>키베르노(Kyverno)</strong>에 관심을 가지셨군요! 어드미션 컨트롤러의 원리를 알았다면, 그걸 실제로 부리게 해주는 '손과 발'이 바로 키베르노입니다.
+🛡️ 쿠버네티스 네이티브 정책 엔진: 키르베노(Kyverno)
+키베르노는 쿠버네티스 전용으로 설계된 보안 정책 관리 도구입니다. 복잡한 프로그래밍 언어를 배울 필요 없이, 우리가 익숙한
+YAML 파일
+만으로 보안 정책을 만들 수 있다는 게 가장 큰 장점입니다.
+1. 키베르노가 하는 3가지 핵심 역할
+검증 (Validate):
+"이 설정은 위험해! 생성 안 돼!"라고 거절하는 역할입니다.
+실무 예시:
+"루트 권한으로 실행되는 파드는 차단해."
+변조 (Mutate):
+"사용자가 설정을 빠뜨렸네? 내가 대신 넣어줄게."라고 수정하는 역할입니다.
+실무 예시:
+"사용자가 리소스 제한(Limit)을 안 적었으면 자동으로 CPU 0.5개를 할당해."
+생성 (Generate):
+"새로운 공간(Namespace)이 생겼네? 보안 설정도 같이 만들어줄게."라고 생성하는 역할입니다.
+실무 예시:
+"새 네임스페이스가 생기면 기본 네트워크 보안 정책(NetworkPolicy)을 자동으로 생성해."
+2. 왜 다른 도구(OPA 등)보다 키베르노인가요?
+쿠버네티스 친화적:
+쿠버네티스 리소스를 그대로 사용하므로 러닝 커브가 매우 낮습니다.
+시각화:
+정책이 잘 적용되고 있는지, 누가 정책을 어기려 했는지 보고서(Policy Report) 형태로 깔끔하게 보여줍니다.
+3. 보안 전문가를 위한 '키베르노 정책' 예시 (YAML)
+보안 담당자로서 이런 정책을 한 번만 배포해두면, 클러스터 전체의 보안 수준이 확 올라갑니다.
+YAML</p>
+<h1 id="_1">예: 특정 레지스트리(우리 회사 전용) 이미지만 사용하도록 강제하는 정책</h1>
+<p>apiVersion:
+kyverno.io/v1
+kind:
+ClusterPolicy
+metadata:
+name:
+restrict-image-registry
+spec:
+validationFailureAction:
+Enforce</p>
+<h1 id="_2">정책 위반 시 즉시 차단</h1>
+<h2 id="rules">rules:</h2>
+<p>name:
+validate-registries
+match:
+resources:
+kinds:
+-
+Pod
+validate:
+message:
+"우리 회사 공식 레지스트리(my-reg.com) 이미지만 사용 가능합니다."
+pattern:
+spec:
+containers:
+-
+image:
+"my-reg.com/<em>"
+💡 오늘의 요약
+"키베르노는 보안 담당자가 원하는 보안 규칙(YAML)을 쿠버네티스 입구에 심어두는 '지능형 보안 센서'다. 이를 통해 실수를 방지하고 강력한 보안 가이드라인을 강제할 수 있다!"
+내일은 일요일이므로, 약속드린 대로
+'3주차 전체 복습 및 주간 요약 테이블'
+시간을 갖겠습니다. 한 주 동안 배운 키알리부터 키베르노까지 쭉 정리해 드릴게요.
+오늘 추가로 배운 키베르노 내용까지 확인되셨나요? </em><em>"확인 완료"</em>*라고 말씀해 주시면 내일 아침 8시 복습 시간에 뵙겠습니다!
+궁금한 점이 있으시면 언제든 말씀해 주세요. 오늘도 수고 많으셨습니다!</p>
+<hr />
+<h2 id="user_2">👤 User</h2>
+<p>확인 완료</p>
+<h2 id="gemini_2">🤖 Gemini</h2>
+<p>확인 감사합니다! 사용자님의 학습 기록에
+'17일차: 어드미션 컨트롤러와 키베르노(Kyverno)'
+교육 이수 도장을 확실히 찍어두었습니다. 보안 정책을 YAML로 직접 관리할 수 있다는 점이 실무에서 큰 무기가 될 거예요.
+약속드린 대로 오늘은
+3주차(15~17일차) 전체 복습
+시간입니다. 이번 주는 특히 보안 관제와 정책 강제화 등 실무적인 '보안 운영'의 핵심들을 다뤘습니다.
+📑 [3주차] 쿠버네티스 심화 관리 및 보안 요약
+회차
+개념
+핵심 요약
+비유
+15일
+Kiali (키알리)
+Istio 서비스 메시의 통신 흐름 시각화 및 mTLS 확인
+교통 통제 센터의
+실시간 감시 모니터
+16일
+EFK 스택
+로그 수집(Fluentd), 저장(Elastic), 시각화(Kibana)
+사건 현장의 모든 발자국을 기록하는
+블랙박스
+17일
+Admission Controller
+리소스 생성/수정 요청을 최종 검문하고 승인/거부
+현관문 앞에서 택배 상자를 검사하는
+보안 요원
+추가
+Kyverno (키베르노)
+YAML 기반의 쿠버네티스 전용 보안 정책 엔진
+보안 규칙이 입력된
+지능형 보안 센서 및 차단기
+Sheets로 내보내기
+💻 3주차 주요 실무 명령어 및 정책 예제
+카테고리
+명령어/내용
+설명
+가시성
+istioctl dashboard kiali
+Istio 환경에서 키알리 대시보드 즉시 실행
+로그
+kubectl logs -f [파드명] -n [NS]
+특정 파드의 로그를 실시간으로 화면에 출력 (추적)
+정책 확인
+kubectl get clusterpolicy
+키베르노에 등록된 클러스터 전체 보안 정책 조회
+정책 보고서
+kubectl get policyreport -A
+어떤 파드가 보안 정책을 위반했는지 리포트 확인
+정책 예시
+validationFailureAction: Enforce
+정책 위반 시 경고만 하는 게 아니라 즉시
+차단
+설정
+Sheets로 내보내기
+✅ 주간 교육 이수 확인 (Confirmation)
+사용자님, 이번 한 주 동안 배우신 <strong>관제(Kiali) - 기록(EFK) - 통제(Kyverno)</strong>로 이어지는 보안 운영 라인을 충분히 검토하셨나요?
+아래 확인 버튼 대신 <strong>"3주차 확인 완료"</strong>라고 말씀해 주시면, 사용자님의 학습 기록에 주간 이수 완료 처리를 하고 내일(18일차) 새로운 진도로 넘어가겠습니다.
+내일부터는 클러스터 외부와 통신하는 더 넓은 세상, '네트워크 서비스(NodePort, LoadBalancer, ExternalName)'의 세부 동작 원리에 대해 알아보겠습니다.
+오늘 복습 내용 중 궁금한 점이 있으시면 언제든 말씀해 주세요! 😊</p>
+<hr />
+
+<br><br>
+<hr>
+
+<!-- HITS Badge Add-on -->
+<div style="text-align: center; margin-bottom: 20px;">
+  <a href="https://github.com/dash1st/ai-trading-log">
+    <img src="https://komarev.com/ghpvc/?username=dash1st-ai-trading-log&color=green&style=flat" alt="Views" />
+  </a>
+</div>
+
+<!-- Giscus Guestbook Add-on -->
+<div class="giscus"></div>
+<script src="https://giscus.app/client.js" data-repo="dash1st/ai-trading-log" data-repo-id="R_kgDORbOAtw"
+  data-category="General" data-mapping="pathname" data-strict="0" data-reactions-enabled="1" data-emit-metadata="0"
+  data-input-position="bottom" data-theme="light" data-lang="ko" crossorigin="anonymous" async>
+  </script>
+
+
+  <br>
+    
+
+    
+    
+      
+    
+
+  <div class="row wm-article-nav-buttons" role="navigation" aria-label="navigation">
+    
+    <div class="wm-article-nav pull-right">
+      <a href="../day_18/" class="btn btn-xs btn-default pull-right">
+        Next
+        <i class="fa fa-chevron-right" aria-hidden="true"></i>
+      </a>
+      <a href="../day_18/" class="btn btn-xs btn-link">
+        Day 18
+      </a>
+    </div>
+    
+    <div class="wm-article-nav">
+      <a href="../day_16/" class="btn btn-xs btn-default pull-left">
+        <i class="fa fa-chevron-left" aria-hidden="true"></i>
+        Previous</a><a href="../day_16/" class="btn btn-xs btn-link">
+        Day 16
+      </a>
+    </div>
+    
+  </div>
+
+    <br>
+</div>
+
+<footer class="container-fluid wm-page-content">
+  <p>Documentation built with <a href="https://www.mkdocs.org/">MkDocs</a> using <a href="https://github.com/gristlabs/mkdocs-windmill">Windmill</a> theme by Grist Labs.</p>
+</footer>
+
+</body>
+</html>

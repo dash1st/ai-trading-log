@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  
+  
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    
+    <link rel="canonical" href="https://dash1st.github.io/ai-trading-log/kubernetes_study/day_12/">
+    <link rel="shortcut icon" href="../../img/favicon.ico">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" />
+    <title>Day 12 - AI 트레이딩 봇 모의투자 일지</title>
+    <link href="../../css/bootstrap-3.3.7.min.css" rel="stylesheet">
+    <link href="../../css/font-awesome-4.7.0.css" rel="stylesheet">
+    <link href="../../css/base.css" rel="stylesheet">
+    <link rel="stylesheet" href="../../css/highlight.css">
+    <!-- HTML5 shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!--[if lt IE 9]>
+        <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+        <script src="https://oss.maxcdn.com/libs/respond.js/1.3.0/respond.min.js"></script>
+    <![endif]-->
+
+    <script src="../../js/jquery-3.2.1.min.js"></script>
+    <script src="../../js/bootstrap-3.3.7.min.js"></script>
+    <script src="../../js/highlight.pack.js"></script>
+    
+    <base target="_top">
+    <script>
+      var base_url = '../..';
+      var is_top_frame = false;
+        
+        var pageToc = [
+          {title: "Kubernetes Study - Day 12", url: "#_top", children: [
+              {title: "\ud83d\udc64 User", url: "#user" },
+              {title: "\ud83e\udd16 Gemini", url: "#gemini" },
+          ]},
+        ];
+
+    </script>
+    <script src="../../js/base.js"></script>
+<!-- Google Analytics Add-on (사용 시 ID 교체) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-YXQ3BYF69N"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag() { dataLayer.push(arguments); }
+  gtag('js', new Date());
+  gtag('config', 'G-YXQ3BYF69N');
+</script>
+ 
+</head>
+
+<body>
+<script>
+if (is_top_frame) { $('body').addClass('wm-top-page'); }
+</script>
+
+
+
+<div class="container-fluid wm-page-content">
+  <a name="_top"></a>
+    
+
+    
+    
+      
+    
+
+  <div class="row wm-article-nav-buttons" role="navigation" aria-label="navigation">
+    
+    <div class="wm-article-nav pull-right">
+      <a href="../day_13/" class="btn btn-xs btn-default pull-right">
+        Next
+        <i class="fa fa-chevron-right" aria-hidden="true"></i>
+      </a>
+      <a href="../day_13/" class="btn btn-xs btn-link">
+        Day 13
+      </a>
+    </div>
+    
+    <div class="wm-article-nav">
+      <a href="../day_11/" class="btn btn-xs btn-default pull-left">
+        <i class="fa fa-chevron-left" aria-hidden="true"></i>
+        Previous</a><a href="../day_11/" class="btn btn-xs btn-link">
+        Day 11
+      </a>
+    </div>
+    
+  </div>
+
+
+    
+
+    <h1 id="kubernetes-study-day-12">Kubernetes Study - Day 12</h1>
+<h2 id="user">👤 User</h2>
+<p>쿠버네티스(Kubernetes) 핵심 개념 하나를 선정해서 학습하기 쉽게 설명해줘.</p>
+<h2 id="gemini">🤖 Gemini</h2>
+<p>알람 확인 감사합니다!
+12일 차
+아침이 밝았네요. 어제 배운 '롤링 업데이트'가 바퀴를 하나씩 갈아 끼우는 것이었다면, 오늘은 더 신중하고 똑똑하게 새 버전을 출시하는 방법인 <strong>카나리 배포(Canary Deployment)</strong>에 대해 알아보겠습니다.
+12일차: 카나리 배포 (Canary Deployment)
+1. 카나리 배포란 무엇인가요?
+전체 사용자에게 한꺼번에 새 버전을 배포하는 것이 아니라,
+아주 적은 양의 트래픽(예: 5%)만 새 버전으로 보내서
+문제가 없는지 확인한 뒤 점진적으로 늘려가는 방식입니다.
+이름의 유래:
+옛날 광부들이 유독가스가 있는지 확인하기 위해 일산화탄소에 민감한
+카나리아 새
+를 먼저 광산에 들여보냈던 것에서 유래되었습니다. 새 버전(카나리아)이 죽지 않고 잘 버티는지 먼저 보는 것이죠.
+2. 왜 사용하나요? (보안 및 안정성 관점)
+보안 전문가이신 사용자님께는
+'위험 관리(Risk Management)'
+측면에서 매우 매력적인 전략입니다.
+장애 범위 최소화:
+새 버전에 치명적인 버그나 보안 취약점이 있더라도, 전체 사용자가 아닌 5%의 사용자만 영향을 받습니다.
+실제 데이터 검증:
+테스트 환경이 아닌 실제 운영 환경의 트래픽을 받아보며 성능이나 보안 로그를 모니터링할 수 있습니다.
+빠른 차단:
+문제가 발견되면 즉시 5%로 가는 길을 끊어버리면 끝납니다.
+3. 어떻게 구현하나요?
+쿠버네티스에서는 어제 배운 <strong>'서비스(Service)'</strong>와 <strong>'인그레스(Ingress)'</strong>를 활용합니다.
+기존 버전(v1)과 새 버전(v2)을 동시에 띄웁니다.
+인그레스 컨트롤러(예: Nginx, Istio 등)가 들어오는 요청의 일부만 v2로 흐르도록 설정합니다.
+💡 오늘의 요약
+"카나리 배포는 '간을 먼저 보는 배포'다. 소수의 인원에게 먼저 맛을 보여주고 괜찮다는 확신이 들 때 전체 식탁에 올리는 가장 안전한 출시 전략이다!"
+보안 장비나 정책을 업데이트할 때도 한꺼번에 적용하지 않고 특정 부서에 먼저 적용해 보는 것과 같은 원리라고 보시면 됩니다.
+실무 활용 팁:
+실무에서는
+Istio
+나
+Linkerd
+같은 '서비스 메시' 도구를 사용하여 "아이폰 사용자만 새 버전을 보게 해줘"라거나 "사내 IP를 가진 사람만 새 버전을 보게 해줘" 같은 아주 정교한 카나리 배포를 수행하기도 합니다.
+내일 오전 8시에는 서비스 간의 복잡한 통신을 관리하고 보안을 강화하는 <strong>'서비스 메시(Service Mesh)'</strong>의 기초에 대해 알려드릴게요.
+혹시 카나리 배포를 위해 트래픽을 나눌 때, 보안 로그에서 어떤 점을 중점적으로 체크하면 좋을지 궁금하신가요?
+내일 오전 8시에 뵙겠습니다!</p>
+<hr />
+
+<br><br>
+<hr>
+
+<!-- HITS Badge Add-on -->
+<div style="text-align: center; margin-bottom: 20px;">
+  <a href="https://github.com/dash1st/ai-trading-log">
+    <img src="https://komarev.com/ghpvc/?username=dash1st-ai-trading-log&color=green&style=flat" alt="Views" />
+  </a>
+</div>
+
+<!-- Giscus Guestbook Add-on -->
+<div class="giscus"></div>
+<script src="https://giscus.app/client.js" data-repo="dash1st/ai-trading-log" data-repo-id="R_kgDORbOAtw"
+  data-category="General" data-mapping="pathname" data-strict="0" data-reactions-enabled="1" data-emit-metadata="0"
+  data-input-position="bottom" data-theme="light" data-lang="ko" crossorigin="anonymous" async>
+  </script>
+
+
+  <br>
+    
+
+    
+    
+      
+    
+
+  <div class="row wm-article-nav-buttons" role="navigation" aria-label="navigation">
+    
+    <div class="wm-article-nav pull-right">
+      <a href="../day_13/" class="btn btn-xs btn-default pull-right">
+        Next
+        <i class="fa fa-chevron-right" aria-hidden="true"></i>
+      </a>
+      <a href="../day_13/" class="btn btn-xs btn-link">
+        Day 13
+      </a>
+    </div>
+    
+    <div class="wm-article-nav">
+      <a href="../day_11/" class="btn btn-xs btn-default pull-left">
+        <i class="fa fa-chevron-left" aria-hidden="true"></i>
+        Previous</a><a href="../day_11/" class="btn btn-xs btn-link">
+        Day 11
+      </a>
+    </div>
+    
+  </div>
+
+    <br>
+</div>
+
+<footer class="container-fluid wm-page-content">
+  <p>Documentation built with <a href="https://www.mkdocs.org/">MkDocs</a> using <a href="https://github.com/gristlabs/mkdocs-windmill">Windmill</a> theme by Grist Labs.</p>
+</footer>
+
+</body>
+</html>

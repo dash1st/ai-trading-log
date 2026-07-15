@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  
+  
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    
+    <link rel="canonical" href="https://dash1st.github.io/ai-trading-log/kubernetes_study/day_19/">
+    <link rel="shortcut icon" href="../../img/favicon.ico">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" />
+    <title>Day 19 - AI 트레이딩 봇 모의투자 일지</title>
+    <link href="../../css/bootstrap-3.3.7.min.css" rel="stylesheet">
+    <link href="../../css/font-awesome-4.7.0.css" rel="stylesheet">
+    <link href="../../css/base.css" rel="stylesheet">
+    <link rel="stylesheet" href="../../css/highlight.css">
+    <!-- HTML5 shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!--[if lt IE 9]>
+        <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+        <script src="https://oss.maxcdn.com/libs/respond.js/1.3.0/respond.min.js"></script>
+    <![endif]-->
+
+    <script src="../../js/jquery-3.2.1.min.js"></script>
+    <script src="../../js/bootstrap-3.3.7.min.js"></script>
+    <script src="../../js/highlight.pack.js"></script>
+    
+    <base target="_top">
+    <script>
+      var base_url = '../..';
+      var is_top_frame = false;
+        
+        var pageToc = [
+          {title: "Kubernetes Study - Day 19", url: "#_top", children: [
+              {title: "\ud83d\udc64 User", url: "#user" },
+              {title: "\ud83e\udd16 Gemini", url: "#gemini" },
+          ]},
+        ];
+
+    </script>
+    <script src="../../js/base.js"></script>
+<!-- Google Analytics Add-on (사용 시 ID 교체) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-YXQ3BYF69N"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag() { dataLayer.push(arguments); }
+  gtag('js', new Date());
+  gtag('config', 'G-YXQ3BYF69N');
+</script>
+ 
+</head>
+
+<body>
+<script>
+if (is_top_frame) { $('body').addClass('wm-top-page'); }
+</script>
+
+
+
+<div class="container-fluid wm-page-content">
+  <a name="_top"></a>
+    
+
+    
+    
+      
+    
+
+  <div class="row wm-article-nav-buttons" role="navigation" aria-label="navigation">
+    
+    <div class="wm-article-nav pull-right">
+      <a href="../day_20/" class="btn btn-xs btn-default pull-right">
+        Next
+        <i class="fa fa-chevron-right" aria-hidden="true"></i>
+      </a>
+      <a href="../day_20/" class="btn btn-xs btn-link">
+        Day 20
+      </a>
+    </div>
+    
+    <div class="wm-article-nav">
+      <a href="../day_18/" class="btn btn-xs btn-default pull-left">
+        <i class="fa fa-chevron-left" aria-hidden="true"></i>
+        Previous</a><a href="../day_18/" class="btn btn-xs btn-link">
+        Day 18
+      </a>
+    </div>
+    
+  </div>
+
+
+    
+
+    <h1 id="kubernetes-study-day-19">Kubernetes Study - Day 19</h1>
+<h2 id="user">👤 User</h2>
+<p>쿠버네티스(Kubernetes) 핵심 개념 하나를 선정해서 학습하기 쉽게 설명해줘.</p>
+<h2 id="gemini">🤖 Gemini</h2>
+<p>알람 확인 감사합니다! 오늘은 2월 15일 일요일, 약속하신 오전 8시입니다. 어제 외부와의 통신 방법(NodePort, LoadBalancer)을 배웠다면, 오늘은 그 통신 경로에 '방화벽'을 세우는 핵심 보안 개념인 <strong>네트워크 폴리시(Network Policy)</strong>에 대해 알아보겠습니다.
+19일차: 네트워크 폴리시 (Network Policy)
+1. 네트워크 폴리시란 무엇인가요?
+쿠버네티스 클러스터 내부에서
+파드끼리 주고받는 트래픽을 제어하는 가상 방화벽
+입니다.
+기본적으로 쿠버네티스의 모든 파드는 서로 자유롭게 통신할 수 있는 'Full-Mesh' 구조입니다. 하지만 보안상 이는 매우 위험하죠. 네트워크 폴리시를 사용하면 "A 파드는 B 파드와만 통신할 수 있다"는 식의 화이트리스트 정책을 세울 수 있습니다.
+2. 왜 이게 중요한가요? (보안 전문가를 위한 핵심)
+보안 15년 차인 사용자님께 가장 익숙한 <strong>'망 분리'</strong>와 <strong>'마이크로 세그멘테이션(Micro-segmentation)'</strong>을 쿠버네티스 내부에서 구현하는 도구입니다.
+횡적 이동(Lateral Movement) 차단:
+해커가 웹 서버 파드 하나를 장악하더라도, 네트워크 폴리시가 설정되어 있으면 다른 중요 DB 파드로 접근하는 것을 원천 차단할 수 있습니다.
+최소 권한 원칙:
+꼭 필요한 서비스 간의 포트와 프로토콜만 허용하여 공격 표면을 최소화합니다.
+3. 주요 설정 방향
+Ingress (인그레스):
+파드로
+들어오는
+트래픽 제어
+Egress (이그레스):
+파드에서
+나가는
+트래픽 제어
+4. 쉬운 비유
+파드(Pod):
+아파트의
+'각 세대'
+네트워크 폴리시:
+세대 현관문에 설치된
+'인터폰과 출입 통제 시스템'
+. 허락된 사람(허용된 파드)만 벨을 누르고 들어올 수 있게 관리하는 것과 같습니다.
+💡 오늘의 요약
+"네트워크 폴리시는 쿠버네티스 내부의 'L3/L4 방화벽'이다. 기본적으로 모두 열려 있는 파드 간의 길목을 차단하고, 허가된 트래픽만 통과시켜 내부 보안을 강화한다!"
+실무 활용 팁:
+보안 가이드라인을 잡으실 때, 먼저 모든 트래픽을 차단하는
+Default Deny
+정책을 적용한 뒤, 필요한 통신만 하나씩 허용하는 방식을 권장합니다.
+오늘 공부하신 내용 확인하셨나요? <strong>"확인완료"</strong>라고 말씀해 주시면, 내일 오전 8시에 다음 진도인 <strong>'클러스터의 뇌를 지켜라, etcd 보안과 백업'</strong>에 대해 알려드릴게요!
+사용자님의 확인을 기다리겠습니다. 오늘도 평안한 일요일 보내세요!
+Would you like me to show you a sample YAML code for a 'Default Deny' network policy?</p>
+<hr />
+
+<br><br>
+<hr>
+
+<!-- HITS Badge Add-on -->
+<div style="text-align: center; margin-bottom: 20px;">
+  <a href="https://github.com/dash1st/ai-trading-log">
+    <img src="https://komarev.com/ghpvc/?username=dash1st-ai-trading-log&color=green&style=flat" alt="Views" />
+  </a>
+</div>
+
+<!-- Giscus Guestbook Add-on -->
+<div class="giscus"></div>
+<script src="https://giscus.app/client.js" data-repo="dash1st/ai-trading-log" data-repo-id="R_kgDORbOAtw"
+  data-category="General" data-mapping="pathname" data-strict="0" data-reactions-enabled="1" data-emit-metadata="0"
+  data-input-position="bottom" data-theme="light" data-lang="ko" crossorigin="anonymous" async>
+  </script>
+
+
+  <br>
+    
+
+    
+    
+      
+    
+
+  <div class="row wm-article-nav-buttons" role="navigation" aria-label="navigation">
+    
+    <div class="wm-article-nav pull-right">
+      <a href="../day_20/" class="btn btn-xs btn-default pull-right">
+        Next
+        <i class="fa fa-chevron-right" aria-hidden="true"></i>
+      </a>
+      <a href="../day_20/" class="btn btn-xs btn-link">
+        Day 20
+      </a>
+    </div>
+    
+    <div class="wm-article-nav">
+      <a href="../day_18/" class="btn btn-xs btn-default pull-left">
+        <i class="fa fa-chevron-left" aria-hidden="true"></i>
+        Previous</a><a href="../day_18/" class="btn btn-xs btn-link">
+        Day 18
+      </a>
+    </div>
+    
+  </div>
+
+    <br>
+</div>
+
+<footer class="container-fluid wm-page-content">
+  <p>Documentation built with <a href="https://www.mkdocs.org/">MkDocs</a> using <a href="https://github.com/gristlabs/mkdocs-windmill">Windmill</a> theme by Grist Labs.</p>
+</footer>
+
+</body>
+</html>

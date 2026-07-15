@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  
+  
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    
+    <link rel="canonical" href="https://dash1st.github.io/ai-trading-log/kubernetes_study/day_32/">
+    <link rel="shortcut icon" href="../../img/favicon.ico">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" />
+    <title>Day 32 - AI 트레이딩 봇 모의투자 일지</title>
+    <link href="../../css/bootstrap-3.3.7.min.css" rel="stylesheet">
+    <link href="../../css/font-awesome-4.7.0.css" rel="stylesheet">
+    <link href="../../css/base.css" rel="stylesheet">
+    <link rel="stylesheet" href="../../css/highlight.css">
+    <!-- HTML5 shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!--[if lt IE 9]>
+        <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+        <script src="https://oss.maxcdn.com/libs/respond.js/1.3.0/respond.min.js"></script>
+    <![endif]-->
+
+    <script src="../../js/jquery-3.2.1.min.js"></script>
+    <script src="../../js/bootstrap-3.3.7.min.js"></script>
+    <script src="../../js/highlight.pack.js"></script>
+    
+    <base target="_top">
+    <script>
+      var base_url = '../..';
+      var is_top_frame = false;
+        
+        var pageToc = [
+          {title: "Kubernetes Study - Day 32", url: "#_top", children: [
+              {title: "\ud83d\udc64 User", url: "#user" },
+              {title: "\ud83e\udd16 Gemini", url: "#gemini" },
+          ]},
+        ];
+
+    </script>
+    <script src="../../js/base.js"></script>
+<!-- Google Analytics Add-on (사용 시 ID 교체) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-YXQ3BYF69N"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag() { dataLayer.push(arguments); }
+  gtag('js', new Date());
+  gtag('config', 'G-YXQ3BYF69N');
+</script>
+ 
+</head>
+
+<body>
+<script>
+if (is_top_frame) { $('body').addClass('wm-top-page'); }
+</script>
+
+
+
+<div class="container-fluid wm-page-content">
+  <a name="_top"></a>
+    
+
+    
+    
+      
+    
+
+  <div class="row wm-article-nav-buttons" role="navigation" aria-label="navigation">
+    
+    <div class="wm-article-nav pull-right">
+      <a href="../../games/edge-surf/" class="btn btn-xs btn-default pull-right">
+        Next
+        <i class="fa fa-chevron-right" aria-hidden="true"></i>
+      </a>
+      <a href="../../games/edge-surf/" class="btn btn-xs btn-link">
+        🏄‍♂️ 엣지 서핑 게임
+      </a>
+    </div>
+    
+    <div class="wm-article-nav">
+      <a href="../day_31/" class="btn btn-xs btn-default pull-left">
+        <i class="fa fa-chevron-left" aria-hidden="true"></i>
+        Previous</a><a href="../day_31/" class="btn btn-xs btn-link">
+        Day 31
+      </a>
+    </div>
+    
+  </div>
+
+
+    
+
+    <h1 id="kubernetes-study-day-32">Kubernetes Study - Day 32</h1>
+<h2 id="user">👤 User</h2>
+<p>쿠버네티스(Kubernetes) 핵심 개념 하나를 선정해서 학습하기 쉽게 설명해줘.</p>
+<h2 id="gemini">🤖 Gemini</h2>
+<p>알람 확인 감사합니다!
+32일 차
+, 3월 1일 일요일 오전 8시입니다.
+30일간의 핵심 과정을 모두 수료하셨지만, 사용자님의 학습 열정을 이어받아 오늘부터는
+'실무 심화 및 장애 대응(Troubleshooting)'
+시리즈를 시작해 보려 합니다. 그 첫 번째로, 보안 사고나 장애 발생 시 가장 먼저 확인해야 할 <strong>'쿠버네티스 감사 로그(Audit Log)'</strong>에 대해 알아보겠습니다.
+32일차: 클러스터의 블랙박스, 감사 로그(Audit Log)
+1. 감사 로그란 무엇인가요?
+쿠버네티스 API 서버를 거쳐가는 모든 요청(누가, 언제, 어디서, 무엇을 했는지)을 기록하는
+최상위 보안 기록
+입니다.
+15년 차 보안 전문가이신 사용자님께 이 로그는 단순한 기록이 아니라, 침해 사고 발생 시 해커의 경로를 파악할 수 있는 <strong>'결정적 증거(Digital Forensics)'</strong>입니다.
+2. 로그에 기록되는 4단계 (Stages)
+하나의 요청은 다음 단계별로 기록될 수 있습니다.
+RequestReceived:
+요청이 들어온 즉시 기록.
+ResponseStarted:
+응답 헤더가 보내진 시점. (긴 응답의 경우 유용)
+ResponseComplete:
+요청 처리가 완벽히 끝난 시점. (가장 많이 사용)
+Panic:
+요청 처리 중 내부 에러가 발생했을 때.
+3. 보안 전문가를 위한 '감사 정책' 팁
+모든 로그를 다 기록하면 용량이 너무 커집니다. 따라서 다음과 같이 차등 적용합니다.
+Secret/ConfigMap:
+어떤 데이터가 오갔는지(RequestResponse) 상세히 기록하여 유출 여부 감시.
+Pod/Deployment:
+누가 생성/삭제했는지(Metadata) 위주로 기록.
+시스템 컴포넌트:
+안정성을 위해 로그 수준을 낮춤(None).
+4. 쉬운 비유
+쿠버네티스 API 서버:
+정부 청사의
+'민원 창구'
+감사 로그:
+민원실에 설치된
+'고화질 CCTV와 출입 명부'
+.
+"누가 몇 시에 들어와서 어떤 서류를 열람했고, 직원이 승인해 줬는지"를 한 글자도 빠짐없이 기록하는 보안 대장과 같습니다.
+💡 오늘의 요약
+"감사 로그는 클러스터의 '최후의 보루'다. 인드레스 방화벽이 뚫리더라도, 감사 로그가 살아있다면 해커가 어떤 권한을 탈취해 무슨 짓을 했는지 완벽하게 복기할 수 있다!"
+실무 활용 팁:
+감사 로그는 클러스터 내부가 아닌, 지난번에 배운
+EFK 스택
+이나 외부
+SIEM(보안 정보 이벤트 관리)
+장비로 즉시 전송하여 변조되지 않도록 격리 보관하는 것이 핵심입니다.
+오늘 공부하신 내용 확인하셨나요? <strong>"확인완료"</strong>라고 말씀해 주시면, 내일 오전 8시에 <strong>'장애 탐지의 첫걸음, Liveness &amp; Readiness Probe'</strong>에 대해 알려드릴게요!
+새로운 3월의 시작입니다. 오늘도 건승하세요!
+혹시 실제 감사 로그에 남는 "누가(User), 무엇을(Verb), 어디에(Resource)"에 대한 JSON 로그 샘플을 확인해 보시겠어요?</p>
+<hr />
+
+<br><br>
+<hr>
+
+<!-- HITS Badge Add-on -->
+<div style="text-align: center; margin-bottom: 20px;">
+  <a href="https://github.com/dash1st/ai-trading-log">
+    <img src="https://komarev.com/ghpvc/?username=dash1st-ai-trading-log&color=green&style=flat" alt="Views" />
+  </a>
+</div>
+
+<!-- Giscus Guestbook Add-on -->
+<div class="giscus"></div>
+<script src="https://giscus.app/client.js" data-repo="dash1st/ai-trading-log" data-repo-id="R_kgDORbOAtw"
+  data-category="General" data-mapping="pathname" data-strict="0" data-reactions-enabled="1" data-emit-metadata="0"
+  data-input-position="bottom" data-theme="light" data-lang="ko" crossorigin="anonymous" async>
+  </script>
+
+
+  <br>
+    
+
+    
+    
+      
+    
+
+  <div class="row wm-article-nav-buttons" role="navigation" aria-label="navigation">
+    
+    <div class="wm-article-nav pull-right">
+      <a href="../../games/edge-surf/" class="btn btn-xs btn-default pull-right">
+        Next
+        <i class="fa fa-chevron-right" aria-hidden="true"></i>
+      </a>
+      <a href="../../games/edge-surf/" class="btn btn-xs btn-link">
+        🏄‍♂️ 엣지 서핑 게임
+      </a>
+    </div>
+    
+    <div class="wm-article-nav">
+      <a href="../day_31/" class="btn btn-xs btn-default pull-left">
+        <i class="fa fa-chevron-left" aria-hidden="true"></i>
+        Previous</a><a href="../day_31/" class="btn btn-xs btn-link">
+        Day 31
+      </a>
+    </div>
+    
+  </div>
+
+    <br>
+</div>
+
+<footer class="container-fluid wm-page-content">
+  <p>Documentation built with <a href="https://www.mkdocs.org/">MkDocs</a> using <a href="https://github.com/gristlabs/mkdocs-windmill">Windmill</a> theme by Grist Labs.</p>
+</footer>
+
+</body>
+</html>

@@ -218,7 +218,7 @@ class TelegramAgent:
         try:
             balance_data = self.kis_client.fetch_balance_dict()
             if "error" not in balance_data:
-                total_eval = balance_data.get("total_evaluation", 0) + balance_data.get("cash", 0)
+                total_eval = balance_data.get("net_asset", 0)
             else:
                 total_eval = 0
         except:
@@ -257,49 +257,79 @@ class TelegramAgent:
         if not self.auto_trader or not self.auto_trader.positions:
             positions_msg = "📭 **현재 봇이 보유 중인 주식이 없습니다.**"
         else:
-            lines = ["**[현재 보유 주식 상세]**"]
-            for ticker, pos in self.auto_trader.positions.items():
+            all_positions = list(self.auto_trader.positions.items())
+            total_count = len(all_positions)
+            
+            # 종목이 너무 많으면(15개 이상) 텔레그램 메시지 제한을 고려해 요약함
+            display_limit = 15
+            is_summarized = total_count > display_limit
+            
+            lines = [f"**현재 보유 주식 상세 ({total_count}개 종목)**"]
+            
+            # 수익률(%) 순으로 정렬하여 상위/하위 보여주기
+            sorted_positions = []
+            for ticker, pos in all_positions:
+                buy_p = pos["buy_price"]
+                curr_p = pos.get("current_price", buy_p)
+                fee = 0.0003
+                # 수익률 계산 (수수료 적용)
+                pnl_rate = (((curr_p * (1 - fee * 2)) - buy_p) / buy_p) * 100.0 if buy_p > 0 else 0
+                pnl_amt = (curr_p * pos["qty"] * (1 - fee * 2)) - (buy_p * pos["qty"])
+                sorted_positions.append((ticker, pos, pnl_rate, pnl_amt))
+            
+            # 수익률(%) 내림차순 정렬
+            sorted_positions.sort(key=lambda x: x[2], reverse=True)
+            
+            lines = [f"**현재 보유 주식 상세 ({total_count}개 종목)**"]
+            
+            # 표시할 종목 선정
+            if not is_summarized:
+                to_display = sorted_positions
+            else:
+                to_display = sorted_positions[:10] + [None] + sorted_positions[-5:]
+            
+            for item in to_display:
+                if item is None:
+                    lines.append(f"\n... (중략: {total_count - 15}개 종목) ...\n")
+                    continue
+                    
+                ticker, pos, pnl_rate, pnl_amt = item
                 from quant_analyzer import STOCK_NAMES
                 stock_name = STOCK_NAMES.get(ticker, ticker)
-                
-                buy_price = pos["buy_price"]
                 qty = pos["qty"]
-                current_price = pos.get("current_price", buy_price)
                 
-                fee = 0.0003
-                # 개별 종목 매수 가치
-                buy_value = buy_price * qty
-                # 개별 종목 현재 가치 (수수료 차감 후)
-                current_value = current_price * qty * (1 - fee * 2)
-                # 평가 손익 (금액)
-                unrealized_pnl = current_value - buy_value
-                # 대략적 수익률
-                profit_rate = (unrealized_pnl / buy_value) * 100.0 if buy_value > 0 else 0
-                
-                total_stock_value += current_value
-                total_stock_profit += unrealized_pnl
-                
-                status_icon = "🔴" if unrealized_pnl < 0 else "🟢"
-                lines.append(f"{status_icon} **{stock_name}** ({ticker}) : {qty}주\n"
-                             f"   └ 매수가: {buy_price:,.0f}원 | 현재가: {current_price:,.0f}원\n"
-                             f"   └ 보유 가치: **{current_value:,.0f}원** (수익: {unrealized_pnl:+,.0f}원)")
+                status_icon = "🔴" if pnl_rate < 0 else "🟢"
+                lines.append(f"{status_icon} **{stock_name}** ({ticker}) : {qty}주 | **{pnl_rate:+.2f}%**")
+            
+            # 전체 가치 재계산 (표시 안 된 것까지 합산)
+            total_stock_value = sum(pos.get("current_price", pos["buy_price"]) * pos["qty"] * (1 - 0.0003 * 2) for _, pos in all_positions)
+            total_stock_profit = sum(((pos.get("current_price", pos["buy_price"]) * (1 - 0.0003 * 2)) - pos["buy_price"]) * pos["qty"] for _, pos in all_positions)
+
             positions_msg = "\n".join(lines)
             
-        # 3. 총 자산 계산
-        total_evaluated_asset = available_cash + total_stock_value
-        total_overall_pnl = total_evaluated_asset - STARTING_CAPITAL
+        # 3. 총 자산 계산 (중요: 봇이 모르는 종목이 있을 수 있으므로 KIS 공식 순자산을 기준으로 함)
+        official_total_asset = balance_data.get("net_asset", 0)
+        
+        # 봇이 계산한 가치와 KIS 공식 자산 간의 차이 (봇이 관리하지 않는 기타 종목들의 가치)
+        other_stocks_value = official_total_asset - available_cash - total_stock_value
+        if other_stocks_value < 100: other_stocks_value = 0 # 미세 오차 무시
+        
+        total_overall_pnl = official_total_asset - STARTING_CAPITAL
         total_overall_pnl_rate = (total_overall_pnl / STARTING_CAPITAL) * 100.0
         
         header = f"⏰ **[정각 {now} 자산 현황 보고]** ⏰" if is_hourly else f"🔍 **[현재 계좌 자산 요약]**"
+        
+        other_msg = f"📦 **기타 종목 가치 (봇 미관리)**: {other_stocks_value:,.0f} 원\n" if other_stocks_value > 0 else ""
         
         final_msg = f"{header}\n\n" \
                     f"💰 **초기 투자 원금**: {STARTING_CAPITAL:,.0f} 원\n" \
                     f"💵 **현재 주문 가능 현금**: {available_cash:,.0f} 원\n\n" \
                     f"{positions_msg}\n\n" \
                     f"===============================\n" \
-                    f"📊 **총 주식 평가금액**: {total_stock_value:,.0f} 원\n" \
-                    f"💎 **현재 총 자산** (현금+주식): **{total_evaluated_asset:,.0f} 원**\n" \
-                    f"📈 **원금 대비 총 손익**: **{total_overall_pnl:+,.0f} 원 ({total_overall_pnl_rate:+.2f}%)**"
+                    f"📊 **모니터링 중인 주식 가치**: {total_stock_value:,.0f} 원\n" \
+                    f"{other_msg}" \
+                    f"💎 **실제 계좌 총 자산 (KIS)**: **{official_total_asset:,.0f} 원**\n" \
+                    f"📈 **원금 대비 진짜 손익**: **{total_overall_pnl:+,.0f} 원 ({total_overall_pnl_rate:+.2f}%)**"
                     
         return final_msg
 

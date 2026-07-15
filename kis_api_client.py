@@ -196,7 +196,11 @@ class KisApiClient:
             return f"🔴 시스템 오류: {e}"
 
     def fetch_balance_dict(self):
-        """계좌 잔고 조회 (raw data dict 반환)"""
+        """계좌 잔고 조회 (첫 페이지 요약 데이터 반환)"""
+        return self.fetch_balance_dict_raw()
+
+    def fetch_balance_dict_raw(self, fk100="", nk100=""):
+        """계좌 잔고 조회 (페이지네이션 지원을 위한 raw data 반환)"""
         self._check_token()
 
         if not self.is_ready or not self.access_token:
@@ -225,8 +229,8 @@ class KisApiClient:
             "FUND_STTL_ICLD_YN": "N",
             "FNCG_AMT_AUTO_RDPT_YN": "N",
             "PRCS_DVSN": "00",
-            "CTX_AREA_FK100": "",
-            "CTX_AREA_NK100": ""
+            "CTX_AREA_FK100": fk100,
+            "CTX_AREA_NK100": nk100
         }
         
         try:
@@ -243,12 +247,18 @@ class KisApiClient:
                     # 순자산
                     net = int(out2.get("nass_amt", 0))         
                     
+                    # [중요] KIS API는 페이지네이션 정보(tr_cont)를 헤더에서 제공함
+                    tr_cont = res.headers.get("tr_cont", "")
+                    
                     return {
                         "cash": dnca,
                         "total_evaluation": tot,
                         "net_asset": net,
                         "account_no": self.account_no,
-                        "holdings": out1
+                        "holdings": out1,
+                        "tr_cont": tr_cont,
+                        "ctx_area_fk100": data.get("ctx_area_fk100", ""),
+                        "ctx_area_nk100": data.get("ctx_area_nk100", "")
                     }
                 else:
                     return {"error": f"서버 거절: {data.get('msg1')}"}

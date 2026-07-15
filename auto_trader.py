@@ -49,12 +49,9 @@ class AutoTrader:
         """현재 시간이 한국 주식시장 장중(평일 09:00 ~ 15:30)인지 여부 반환"""
         kr_tz = pytz.timezone('Asia/Seoul')
         now = datetime.now(kr_tz)
-        # 주말(토=5, 일=6)이면 False
         if now.weekday() >= 5:
             return False
             
-        # 시간 단위 판별 (09:00 ~ 15:29 까지 허용)
-        # 9시(9 * 60) 오픈, 15시 30분(15 * 60 + 30) 마감
         current_minutes = now.hour * 60 + now.minute
         open_minutes = 9 * 60
         close_minutes = 15 * 60 + 30
@@ -66,32 +63,67 @@ class AutoTrader:
         now = datetime.now(kr_tz).strftime("%Y-%m-%d %H:%M:%S")
         print(f"[{now}] [AutoTrader] {msgs}")
 
-    def sync_positions_from_kis(self):
+    def sync_positions_from_kis(self) -> bool:
         """
         KIS API 실시간 잔고를 조회하여 봇의 메모리(self.positions)에 동기화합니다.
-        시스템 재부팅 등으로 인해 유실된 포지션을 복구하기 위함입니다.
+        [개선] 페이지네이션 처리 및 실패 시 리트라이 로직 추가.
         """
-        self.log("🔄 KIS API 계좌 잔고를 바탕으로 포지션 동기화를 시작합니다...")
-        balance_data = self.kis_client.fetch_balance_dict()
+        self.log("🔄 KIS API 계좌 전체 잔고 동기화를 시작합니다...")
         
-        if "error" in balance_data:
-            self.log(f"❌ 포지션 동기화 실패: {balance_data['error']}")
-            return
-
-        holdings = balance_data.get("holdings", [])
+        all_holdings = []
+        fk100 = ""
+        nk100 = ""
+        
+        # API 오류 시 최대 3번까지 재시도 (토큰 발급 제한 등 고려)
+        for attempt in range(3):
+            success = True
+            temp_holdings = []
+            
+            while True:
+                res_data = self.kis_client.fetch_balance_dict_raw(fk100=fk100, nk100=nk100)
+                if "error" in res_data:
+                    # 500 에러 등 일시적 서버 오류 시 리트라이
+                    if "500" in res_data['error'] or "통신 오류" in res_data['error']:
+                        self.log(f"⚠️ 증권사 서버 응답 지연(500). 2초 후 페이지 재시도... (현재 {len(temp_holdings)}개)")
+                        time.sleep(2)
+                        continue
+                    self.log(f"⚠️ [시도 {attempt+1}/3] 잔고 조회 실패: {res_data['error']}")
+                    success = False
+                    break
+                    
+                temp_holdings.extend(res_data.get("holdings", []))
+                tr_cont = res_data.get("tr_cont", "")
+                if tr_cont in ["D", "E", ""]: break
+                
+                fk100 = res_data.get("ctx_area_fk100", "")
+                nk100 = res_data.get("ctx_area_nk100", "")
+                if not nk100: break
+                
+                self.log(f"📄 다음 페이지 조회 중... (현재 {len(temp_holdings)}개 포착)")
+                time.sleep(1.2) # KIS API 초당 1건 제한 준수 (여유있게 1.2초)
+                
+            if success:
+                all_holdings = temp_holdings
+                break
+            else:
+                if attempt < 2:
+                    self.log("⏳ 65초 후 다시 시도합니다 (KIS API 제한 회피)...")
+                    time.sleep(65)
+        
+        if not all_holdings and not success:
+            self.log("❌ 모든 동기화 시도가 실패했습니다. 나중에 다시 시도합니다.")
+            return False
+            
         new_positions = {}
         kr_tz = pytz.timezone('Asia/Seoul')
         now_str = datetime.now(kr_tz).strftime("%Y-%m-%d %H:%M:%S")
 
-        for item in holdings:
+        for item in all_holdings:
             ticker = item.get("pdno")
             qty = int(item.get("hldg_qty", 0))
-            if qty <= 0:
-                continue
+            if qty <= 0: continue
             
-            # 평균 매수단가 추출
             buy_price = float(item.get("pchs_avg_pric", 0))
-            # 현재가 추출
             current_price = float(item.get("prpr", buy_price))
             
             new_positions[ticker] = {
@@ -99,11 +131,12 @@ class AutoTrader:
                 "qty": qty,
                 "high_water_mark": max(buy_price, current_price),
                 "current_price": current_price,
-                "buy_time": now_str # 정확한 매수시간은 알 수 없으므로 현재 시간 주입
+                "buy_time": now_str
             }
         
         self.positions = new_positions
-        self.log(f"✅ 포지션 동기화 완료: {len(self.positions)}개 종목 포착")
+        self.log(f"✅ 동기화 완료: 총 {len(self.positions)}개 종목 감시 중")
+        return True
 
     async def execute_auto_buy(self, ticker: str, current_price: float, reason: str, weight: float = 1.0):
         """
@@ -192,7 +225,7 @@ class AutoTrader:
             if pos.get("high_water_mark", 0) == 0:
                 self.positions[ticker]["high_water_mark"] = current_price
                 hwm = current_price
-
+            
             # 📈 최고가(고점) 갱신
             if current_price > hwm:
                 self.positions[ticker]["high_water_mark"] = current_price
@@ -223,7 +256,8 @@ class AutoTrader:
                 self.today_realized_pnl += realized_profit
                 
                 # 포지션 테이블에서 제거
-                del self.positions[ticker]
+                if ticker in self.positions:
+                   del self.positions[ticker]
                 
                 from quant_analyzer import STOCK_NAMES
                 stock_name = STOCK_NAMES.get(ticker, ticker)
@@ -247,7 +281,8 @@ class AutoTrader:
                 realized_loss = (current_price - buy_price) * qty * (1 - fee*2)
                 self.today_realized_pnl += realized_loss
                 
-                del self.positions[ticker]
+                if ticker in self.positions:
+                    del self.positions[ticker]
                 
                 from quant_analyzer import STOCK_NAMES
                 stock_name = STOCK_NAMES.get(ticker, ticker)
@@ -265,7 +300,7 @@ class AutoTrader:
     async def send_portfolio_status(self):
         """현재 보유 중인 포지션의 수익률 현황을 요약하여 텔레그램으로 발송"""
         if not self.positions:
-            return  # 비어있으면 굳이 스팸성 메시지를 보내지 않음
+            return
             
         lines = ["📊 **[현재 보유 포지션 실시간 현황]** 📊"]
         for ticker, pos in self.positions.items():
@@ -290,7 +325,14 @@ class AutoTrader:
         """오토 트레이더 영구 데몬 반복 루프"""
         self.is_running = True
         self.log("🤖 완전 자동 추적 및 매매 엔진(Auto Trader) 동작을 개시합니다.")
+        
+        last_sync_time = time.time()
+        
         while self.is_running:
+            # 포지션이 비어있거나 1시간이 지났으면 재동기화 시도
+            if not self.positions or (time.time() - last_sync_time > 3600):
+                self.sync_positions_from_kis()
+                last_sync_time = time.time()
+                
             await self.monitor_open_positions()
-            # 60초(1분) 대기 후 다시 감시
             await asyncio.sleep(60)

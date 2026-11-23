@@ -4,3 +4,4 @@ __pycache__/
 venv/
 *.log
 trading_log/site/
+*.pem

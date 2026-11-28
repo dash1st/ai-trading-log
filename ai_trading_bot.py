@@ -3,6 +3,10 @@ from quant_analyzer import QuantAnalyzer
 from telegram_agent import TelegramAgent
 from auto_trader import AutoTrader
 import asyncio
+import logging
+
+# 스케줄 작업/핸들러에서 난 예외가 조용히 묻히지 않도록 WARNING 이상은 로그로 남김
+logging.basicConfig(format="%(asctime)s [%(levelname)s] %(name)s: %(message)s", level=logging.WARNING)
 
 def run_bot():
     print("=" * 50)

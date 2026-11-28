@@ -1,0 +1,30 @@
+# Synology DSM 6.2 (docker-compose 1.24) 용 설정
+# NAS 폴더 구조 (예: /volume1/docker/ai-trading-bot):
+#   docker-compose.yml   <- 이 파일
+#   app/                 <- ai-trading-log 저장소 clone (.env 는 app/.env 에 둠, git 에는 안 올라감)
+#   ssh/deploy_key       <- GitHub Pages 배포용 deploy key (권한 600)
+version: "2.4"
+
+services:
+  bot:
+    image: ai-trading-bot:latest
+    container_name: ai-trading-bot
+    restart: unless-stopped
+    working_dir: /app
+    volumes:
+      - ./app:/app
+      - ./ssh:/keys:ro
+    environment:
+      TZ: Asia/Seoul
+      PYTHONUNBUFFERED: "1"
+      GIT_AUTHOR_NAME: ai-trading-bot
+      GIT_AUTHOR_EMAIL: ai-trading-bot@users.noreply.github.com
+      GIT_COMMITTER_NAME: ai-trading-bot
+      GIT_COMMITTER_EMAIL: ai-trading-bot@users.noreply.github.com
+      GIT_SSH_COMMAND: ssh -i /keys/deploy_key -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new -o UserKnownHostsFile=/tmp/known_hosts
+    mem_limit: 600m
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"

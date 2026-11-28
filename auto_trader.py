@@ -173,7 +173,7 @@ class AutoTrader:
         self.log(f"🚀 [자동 매수 시그널 포착] -> {ticker} | 매수 시도량: {qty}주 (비중 {weight}배 적용) | 사유: {reason}")
         
         # KIS API로 매수 주문 전송
-        kis_res = self.kis_client.execute_buy(ticker, str(qty), str(int(current_price)))
+        kis_res = await asyncio.to_thread(self.kis_client.execute_buy, ticker, str(qty), str(int(current_price)))
         
         if "주문 성공" not in kis_res:
             self.log(f"❌ [매수 실패] {ticker} - {kis_res}")
@@ -204,7 +204,9 @@ class AutoTrader:
         """
         if not self.positions:
             return  # 감시할 종목이 없으면 조용히 패스
-            
+        if not self.is_market_open():
+            return  # 장외 시간에는 주문이 거부되므로 감시/청산하지 않음
+
         self.log(f"👀 현재 자동 매수된 포지션({len(self.positions)}개 종목)의 익절/손절선을 감시 중입니다...")
         
         # dict 순회 도중 삭제 에러 방지를 위해 복사본 리스트 사용
@@ -215,10 +217,10 @@ class AutoTrader:
             hwm = pos.get("high_water_mark", buy_price)
             
             # 현재가 최신 데이터 1봉 가져오기
-            df = self.kis_client.fetch_ohlcv(ticker, period_type="D")
+            df = await asyncio.to_thread(self.kis_client.fetch_ohlcv, ticker, "D")
             if df is None or df.empty:
                 continue
-                
+
             current_price = df.iloc[-1]['Close']
             
             # [Fix] 동기화된 포지션이 처음 감시될 때 high_water_mark가 0인 경우 방지
@@ -249,9 +251,13 @@ class AutoTrader:
             # 1. 트레일링 스탑 체결 (수익 극대화 후 추세 꺾임 포착)
             if has_profit_buffer and trailing_drop_rate >= self.trailing_drop_percent:
                 self.log(f"🎯 [트레일링 스탑 발동] {ticker} | 고점 대비 -{trailing_drop_rate:.2f}% 하락 포착. 추세 이탈로 판단하여 수익을 확정합니다!")
-                kis_res = self.kis_client.execute_sell(ticker, str(qty), str(int(current_price)))
-                
-                # 실현 손익 기록 
+                kis_res = await asyncio.to_thread(self.kis_client.execute_sell, ticker, str(qty), str(int(current_price)))
+                if "주문 성공" not in kis_res:
+                    # 주문이 거부되면 포지션을 유지하고 다음 주기(1분 후)에 다시 시도
+                    self.log(f"❌ [익절 매도 실패] {ticker} - {kis_res} (포지션 유지, 다음 주기 재시도)")
+                    continue
+
+                # 실현 손익 기록
                 realized_profit = (current_price - buy_price) * qty * (1 - fee*2)
                 self.today_realized_pnl += realized_profit
                 
@@ -275,8 +281,12 @@ class AutoTrader:
             # 2. 강제 손절 조건 달성
             elif profit_rate <= self.loss_percent:
                 self.log(f"🩸 [손절 라인 이탈] {ticker} | 손실률: {profit_rate:.2f}% | 원금 보호를 위해 강제 매도합니다.")
-                kis_res = self.kis_client.execute_sell(ticker, str(qty), str(int(current_price)))
-                
+                kis_res = await asyncio.to_thread(self.kis_client.execute_sell, ticker, str(qty), str(int(current_price)))
+                if "주문 성공" not in kis_res:
+                    # 주문이 거부되면 포지션을 유지하고 다음 주기(1분 후)에 다시 시도
+                    self.log(f"❌ [손절 매도 실패] {ticker} - {kis_res} (포지션 유지, 다음 주기 재시도)")
+                    continue
+
                 # 실현 손실 기록
                 realized_loss = (current_price - buy_price) * qty * (1 - fee*2)
                 self.today_realized_pnl += realized_loss
@@ -331,7 +341,8 @@ class AutoTrader:
         while self.is_running:
             # 포지션이 비어있거나 1시간이 지났으면 재동기화 시도
             if not self.positions or (time.time() - last_sync_time > 3600):
-                self.sync_positions_from_kis()
+                # 동기 HTTP 호출 + time.sleep이 있으므로 별도 스레드에서 실행해 텔레그램 응답이 멈추지 않게 함
+                await asyncio.to_thread(self.sync_positions_from_kis)
                 last_sync_time = time.time()
                 
             await self.monitor_open_positions()

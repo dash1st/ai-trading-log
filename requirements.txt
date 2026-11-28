@@ -15,5 +15,19 @@ ta==0.11.0
 # 텔레그램 메신저 알림용 봇 라이브러리 (Python 3.13 호환을 위해 21.0 이상 유지, 스케줄러 포함)
 python-telegram-bot[job-queue]>=21.0
 
+# 한국 시간대 처리
+pytz
+
+# KRX 전체 종목명 목록 (quant_analyzer.py)
+finance-datareader
+
+# 헬스 체크용 CPU/RAM 조회 (telegram_agent.py)
+psutil
+
+# 매매 일지 블로그(MkDocs) 빌드 및 GitHub Pages 배포
+mkdocs
+mkdocs-windmill
+pymdown-extensions
+
 # (선택) API 키 발급 전 임시 차트 데이터 수집용 테스트 라이브러리
 yfinance==0.2.36

@@ -9,12 +9,13 @@ class BlogWriter:
     AI 트레이딩 봇의 매매 일지를 MkDocs 마크다운 포맷으로 작성하고,
     GitHub Pages로 자동 배포(deploy_docs.sh)하는 클래스
     """
-    def __init__(self, logs_dir='/home/ubuntu/ai_trading_bot/trading_log/docs/logs'):
-        self.logs_dir = logs_dir
-        self.docs_dir = '/home/ubuntu/ai_trading_bot/trading_log/docs'
-        self.base_dir = '/home/ubuntu/ai_trading_bot'
+    def __init__(self, logs_dir=None):
+        # 봇 코드가 있는 폴더 기준 (EC2/NAS 컨테이너 어디서든 동작). BOT_BASE_DIR로 덮어쓸 수 있음
+        self.base_dir = os.environ.get('BOT_BASE_DIR', os.path.dirname(os.path.abspath(__file__)))
+        self.docs_dir = os.path.join(self.base_dir, 'trading_log', 'docs')
+        self.logs_dir = logs_dir or os.path.join(self.docs_dir, 'logs')
         os.makedirs(self.logs_dir, exist_ok=True)
-        self.deploy_script = '/home/ubuntu/ai_trading_bot/deploy_docs.sh'
+        self.deploy_script = os.path.join(self.base_dir, 'deploy_docs.sh')
 
     def get_today_filepath(self):
         """오늘 연월(YYYY-MM) 기준으로 파일 경로 반환 (이번 달 일지 파일 하나에 계속 누적)"""

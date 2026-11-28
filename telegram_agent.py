@@ -1,3 +1,4 @@
+import asyncio
 import os
 from dotenv import load_dotenv
 from telegram import Update
@@ -112,7 +113,7 @@ class TelegramAgent:
             
         await update.message.reply_text(f"🔍 '{ticker}' 분석 리포트 생성 중...")
         
-        df = self.kis_client.fetch_ohlcv(ticker, period_type="D")
+        df = await asyncio.to_thread(self.kis_client.fetch_ohlcv, ticker, "D")
         if df is None or df.empty:
             await update.message.reply_text("❌ 데이터를 가져오지 못했습니다.")
             return
@@ -150,7 +151,7 @@ class TelegramAgent:
             
         await update.message.reply_text(f"💸 매수 주문 실행 중... ({ticker} {qty}주, {price}원)")
         
-        res_msg = self.kis_client.execute_buy(ticker, qty, price)
+        res_msg = await asyncio.to_thread(self.kis_client.execute_buy, ticker, qty, price)
         await update.message.reply_text(res_msg)
 
     async def sell_cmd(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -181,7 +182,7 @@ class TelegramAgent:
             
         await update.message.reply_text(f"💸 매도 주문 실행 중... ({ticker} {qty}주, {price}원)")
         
-        res_msg = self.kis_client.execute_sell(ticker, qty, price)
+        res_msg = await asyncio.to_thread(self.kis_client.execute_sell, ticker, qty, price)
         await update.message.reply_text(res_msg)
 
     async def devlog_cmd(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -216,7 +217,7 @@ class TelegramAgent:
         
         # 계좌 총 자산 조회 (API 에러 시 0 처리)
         try:
-            balance_data = self.kis_client.fetch_balance_dict()
+            balance_data = await asyncio.to_thread(self.kis_client.fetch_balance_dict)
             if "error" not in balance_data:
                 total_eval = balance_data.get("net_asset", 0)
             else:
@@ -242,7 +243,7 @@ class TelegramAgent:
         
         # 1. 원금 및 KIS 잔고 데이터
         STARTING_CAPITAL = 10_000_000
-        balance_data = self.kis_client.fetch_balance_dict()
+        balance_data = await asyncio.to_thread(self.kis_client.fetch_balance_dict)
         
         if "error" in balance_data:
             return f"⚠️ 계좌 잔고를 불러오지 못했습니다: {balance_data['error']}"
@@ -358,7 +359,7 @@ class TelegramAgent:
         watch_list = list(STOCK_NAMES.keys())
         
         for ticker in watch_list:
-            df = self.kis_client.fetch_ohlcv(ticker, period_type="D")
+            df = await asyncio.to_thread(self.kis_client.fetch_ohlcv, ticker, "D")
             if df is not None and not df.empty:
                 analyzed_df = self.analyzer.calculate_indicators(df)
                 latest = analyzed_df.iloc[-1]
@@ -376,7 +377,6 @@ class TelegramAgent:
                         )
             
             # KIS API 호출 제한(Rate Limit) 방지 & 텔레그램 스레드 양보
-            import asyncio
             await asyncio.sleep(0.1)
         
         # 기존 관심종목 브리핑 발송은 삭제하고, 현재 보유 중인 알짜 포지션 수익 현황만 보고
@@ -441,13 +441,16 @@ class TelegramAgent:
         app = ApplicationBuilder().token(self.token).build()
         self.application = app # [NEW] Store application object
         
+        # [Security] .env의 TELEGRAM_CHAT_ID 채팅에서 온 메시지만 처리 (다른 사람은 무시)
+        owner_only = filters.Chat(chat_id=int(self.chat_id))
+
         # 명령어 핸들러 등록
-        app.add_handler(CommandHandler("start", self.start_cmd))
-        app.add_handler(CommandHandler("help", self.help_cmd))
-        app.add_handler(CommandHandler("status", self.status_cmd))
-        app.add_handler(CommandHandler("balance", self.balance_cmd))
-        app.add_handler(CommandHandler("buy", self.buy_cmd))
-        app.add_handler(CommandHandler("sell", self.sell_cmd))
+        app.add_handler(CommandHandler("start", self.start_cmd, filters=owner_only))
+        app.add_handler(CommandHandler("help", self.help_cmd, filters=owner_only))
+        app.add_handler(CommandHandler("status", self.status_cmd, filters=owner_only))
+        app.add_handler(CommandHandler("balance", self.balance_cmd, filters=owner_only))
+        app.add_handler(CommandHandler("buy", self.buy_cmd, filters=owner_only))
+        app.add_handler(CommandHandler("sell", self.sell_cmd, filters=owner_only))
         
         # 스케줄러 1: 5분(300초) 주기 백그라운드 스캔 (장중에만 내부적으로 동작)
         app.job_queue.run_repeating(self.scheduled_report, interval=300, first=10) 
@@ -476,10 +479,10 @@ class TelegramAgent:
         app.job_queue.run_repeating(self.scheduled_hourly_portfolio_report, interval=3600, first=0)
         
         # 명령어 핸들러 등록 (devlog 추가)
-        app.add_handler(CommandHandler("devlog", self.devlog_cmd))
-        
+        app.add_handler(CommandHandler("devlog", self.devlog_cmd, filters=owner_only))
+
         # 알 수 없는 명령어 및 텍스트 처리 (가장 마지막에 등록하여 Fallback 역할 수행)
-        app.add_handler(MessageHandler(filters.TEXT | filters.COMMAND, self.fallback_msg))
+        app.add_handler(MessageHandler(owner_only & (filters.TEXT | filters.COMMAND), self.fallback_msg))
 
         return app
 
